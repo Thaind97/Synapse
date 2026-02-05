@@ -57,6 +57,9 @@ namespace Synapse.Services
             services.AddSingleton<IDashboardService, MockDashboardService>();
             services.AddScoped<ITaskService, TaskService>();
             services.AddTransient<ISequenceService, SequenceService>();
+            services.AddSingleton<ISequenceRunner, SequenceRunner>();
+            services.AddSingleton<ICommandExecutor, MockCommandExecutor>();
+            services.AddSingleton<IRunManager, RunManager>();
 
             return services;
         }

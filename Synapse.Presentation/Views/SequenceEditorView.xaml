@@ -149,6 +149,7 @@
                 <Button Content="Delete" Command="{Binding DeleteDeviceCommandCommand}" Style="{StaticResource ActionButtonStyle}" Width="50"/>
                 <Button Content="↑" Command="{Binding MoveCommandUpCommand}" Style="{StaticResource ActionButtonStyle}" Width="30"/>
                 <Button Content="↓" Command="{Binding MoveCommandDownCommand}" Style="{StaticResource ActionButtonStyle}" Width="30"/>
+                <Button Content="Manage Batteries" Click="ManageBatteries_Click" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0"/>
             </StackPanel>
 
             <Border Grid.Row="1" BorderBrush="#CCCCCC" BorderThickness="1" Margin="0,5,0,0" Background="White">

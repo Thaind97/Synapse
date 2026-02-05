@@ -117,5 +117,76 @@ namespace Synapse.Services.Services.Implement
                 await context.SaveChangesAsync();
             }
         }
+
+        public async Task AssignSequenceToBatteryAsync(long sequenceId, int batteryChannel)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            // Remove existing assignment for that battery
+            var exist = await context.SequenceAssignments.FirstOrDefaultAsync(a => a.BatteryChannel == batteryChannel);
+            if (exist != null)
+            {
+                context.SequenceAssignments.Remove(exist);
+            }
+
+            // Try to find battery master record
+            var battery = await context.Batteries.FirstOrDefaultAsync(b => b.Channel == batteryChannel);
+            var assign = new SequenceAssignment { SequenceId = sequenceId, BatteryChannel = batteryChannel, AssignedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") };
+            if (battery != null)
+            {
+                assign.BatteryId = battery.Id;
+            }
+
+            context.SequenceAssignments.Add(assign);
+            await context.SaveChangesAsync();
+        }
+
+        public async Task UnassignSequenceFromBatteryAsync(long sequenceId, int batteryChannel)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            var exist = await context.SequenceAssignments.FirstOrDefaultAsync(a => a.SequenceId == sequenceId && a.BatteryChannel == batteryChannel);
+            if (exist != null)
+            {
+                context.SequenceAssignments.Remove(exist);
+                await context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<List<SequenceAssignment>> GetAssignmentsAsync()
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.SequenceAssignments.Include(a => a.Battery).AsNoTracking().ToListAsync();
+        }
+
+        public async Task<List<Battery>> GetBatteriesAsync()
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Batteries.AsNoTracking().OrderBy(b => b.Channel).ToListAsync();
+        }
+
+        public async Task<Battery> CreateBatteryAsync(Battery battery)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            context.Batteries.Add(battery);
+            await context.SaveChangesAsync();
+            return battery;
+        }
+
+        public async Task UpdateBatteryAsync(Battery battery)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            context.Batteries.Update(battery);
+            await context.SaveChangesAsync();
+        }
+
+        public async Task DeleteBatteryAsync(long batteryId)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            var b = await context.Batteries.FindAsync(batteryId);
+            if (b != null)
+            {
+                context.Batteries.Remove(b);
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }

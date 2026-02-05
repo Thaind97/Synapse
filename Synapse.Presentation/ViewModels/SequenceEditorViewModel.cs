@@ -2,18 +2,23 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Synapse.Infrastructure.Entities;
 using Synapse.Services.Services.Abstraction;
-using Synapse.Shared.Constants;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.ObjectModel;
+using Synapse.Shared.Constants;
 
 namespace Synapse.Presentation.ViewModels
 {
     public class SequenceEditorViewModel : ObservableObject
     {
         private readonly ISequenceService _sequenceService;
+        private readonly IRunManager _runManager;
 
-        public SequenceEditorViewModel(ISequenceService sequenceService)
+        public SequenceEditorViewModel(ISequenceService sequenceService, IRunManager runManager)
         {
             _sequenceService = sequenceService;
+            _runManager = runManager;
 
             Sequences = new ObservableCollection<Sequence>();
             Steps = new ObservableCollection<SequenceStep>();
@@ -42,8 +47,13 @@ namespace Synapse.Presentation.ViewModels
 
             SaveChangesCommand = new AsyncRelayCommand(SaveChangesAsync);
 
+            // Run commands
+            StartRunCommand = new AsyncRelayCommand(StartRunAsync, () => SelectedSequence != null && !string.IsNullOrWhiteSpace(BatteryId));
+            StopRunCommand = new AsyncRelayCommand(StopRunAsync, () => !string.IsNullOrWhiteSpace(BatteryId));
+
             // Default START/END when no sequence selected
             ShowDefaultSteps();
+            InitializeDefaultBattery();
         }
 
         #region Properties
@@ -105,6 +115,34 @@ namespace Synapse.Presentation.ViewModels
             set => SetProperty(ref _selectedParameter, value);
         }
 
+        private string _batteryId = string.Empty;
+        public string BatteryId
+        {
+            get => _batteryId;
+            set
+            {
+                if (SetProperty(ref _batteryId, value))
+                {
+                    StartRunCommand.NotifyCanExecuteChanged();
+                    StopRunCommand.NotifyCanExecuteChanged();
+                }
+            }
+        }
+
+        public ObservableCollection<string> BatteryList { get; } = new ObservableCollection<string>(Enumerable.Range(1,24).Select(i => i.ToString()));
+
+        private string _selectedBattery;
+        public string SelectedBattery
+        {
+            get => _selectedBattery;
+            set => SetProperty(ref _selectedBattery, value);
+        }
+
+        private void InitializeDefaultBattery()
+        {
+            if (BatteryList.Count > 0 && string.IsNullOrEmpty(SelectedBattery))
+                SelectedBattery = BatteryList[0];
+        }
         #endregion
 
         #region Commands
@@ -126,6 +164,8 @@ namespace Synapse.Presentation.ViewModels
         public IRelayCommand MoveCommandDownCommand { get; }
         
         public IAsyncRelayCommand SaveChangesCommand { get; }
+        public IAsyncRelayCommand StartRunCommand { get; }
+        public IAsyncRelayCommand StopRunCommand { get; }
 
         #endregion
 
@@ -495,11 +535,25 @@ namespace Synapse.Presentation.ViewModels
                 await _sequenceService.UpdateSequenceAsync(SelectedSequence);
             }
         }
-        
+
+        private async Task StartRunAsync()
+        {
+            if (SelectedSequence == null || string.IsNullOrWhiteSpace(BatteryId)) return;
+            await _runManager.EnqueueRunAsync(SelectedSequence.Id, BatteryId);
+        }
+
+        private async Task StopRunAsync()
+        {
+            if (string.IsNullOrWhiteSpace(BatteryId)) return;
+            await _runManager.StopRunAsync(BatteryId);
+        }
+
         private void NotifySequenceCommands()
         {
             DeleteSequenceCommand.NotifyCanExecuteChanged();
             AddStepCommand.NotifyCanExecuteChanged();
+            StartRunCommand?.NotifyCanExecuteChanged();
+            StopRunCommand?.NotifyCanExecuteChanged();
         }
 
         private void NotifyStepCommands()

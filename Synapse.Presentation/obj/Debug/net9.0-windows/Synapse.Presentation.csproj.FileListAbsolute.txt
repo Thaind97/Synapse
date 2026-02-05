@@ -381,3 +381,7 @@ D:\HSG3\HSG\Synapse\Synapse.Presentation\obj\Debug\net9.0-windows\refint\Synapse
 D:\HSG3\HSG\Synapse\Synapse.Presentation\obj\Debug\net9.0-windows\Synapse.Presentation.pdb
 D:\HSG3\HSG\Synapse\Synapse.Presentation\obj\Debug\net9.0-windows\Synapse.Presentation.genruntimeconfig.cache
 D:\HSG3\HSG\Synapse\Synapse.Presentation\obj\Debug\net9.0-windows\ref\Synapse.Presentation.dll
+D:\HSG3\HSG\Synapse\Synapse.Presentation\obj\Debug\net9.0-windows\Views\ManageBatteriesView.baml
+D:\HSG3\HSG\Synapse\Synapse.Presentation\obj\Debug\net9.0-windows\Views\ManageBatteriesView.g.cs
+D:\HSG3\HSG\Synapse\Synapse.Presentation\obj\Debug\net9.0-windows\Views\ManageBatteriesWindow.g.cs
+D:\HSG3\HSG\Synapse\Synapse.Presentation\obj\Debug\net9.0-windows\Views\ManageBatteriesWindow.baml

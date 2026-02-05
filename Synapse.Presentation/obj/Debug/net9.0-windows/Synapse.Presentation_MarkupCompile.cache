@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET9_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NET9_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
 D:\HSG3\HSG\Synapse\Synapse.Presentation\App.xaml
-51885489460
+7-1293471511
 
-24-22673259
+27-128256427
 242-1572418605
-MainWindow.xaml;Views\DashboardView.xaml;Views\EVControlView.xaml;Views\LoginView.xaml;Views\SequenceEditorView.xaml;
+MainWindow.xaml;Views\DashboardView.xaml;Views\EVControlView.xaml;Views\LoginView.xaml;Views\ManageBatteriesView.xaml;Views\ManageBatteriesWindow.xaml;Views\SequenceEditorView.xaml;
 
 False
 

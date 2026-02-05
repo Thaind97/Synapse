@@ -72,6 +72,18 @@ namespace Synapse.Presentation.ViewModels
                     _ = sequenceVm.LoadSequencesCommand.ExecuteAsync(null);
                     SetCurrentPage("SiteManagement");
                     break;
+                case "ManageBatteries":
+                    var mbVm = Synapse.Shared.Helper.ServiceHelper.GetRequiredService<ManageBatteriesViewModel>();
+                    CurrentView = mbVm;
+                    // call LoadDataAsync if available
+                    var loadMethod = mbVm.GetType().GetMethod("LoadDataAsync", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                    if (loadMethod != null)
+                    {
+                        var result = loadMethod.Invoke(mbVm, null);
+                        if (result is System.Threading.Tasks.Task t) _ = t;
+                    }
+                    SetCurrentPage("ManageBatteries");
+                    break;
                 default:
                     break;
             }

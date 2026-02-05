@@ -17,5 +17,16 @@ namespace Synapse.Services.Services.Abstraction
         Task<DeviceCommand> AddCommandAsync(DeviceCommand command);
         Task UpdateCommandAsync(DeviceCommand command);
         Task DeleteCommandAsync(long id);
+
+        // Assignment
+        Task AssignSequenceToBatteryAsync(long sequenceId, int batteryChannel);
+        Task UnassignSequenceFromBatteryAsync(long sequenceId, int batteryChannel);
+        Task<List<SequenceAssignment>> GetAssignmentsAsync();
+
+        // Battery master data
+        Task<List<Battery>> GetBatteriesAsync();
+        Task<Battery> CreateBatteryAsync(Battery battery);
+        Task UpdateBatteryAsync(Battery battery);
+        Task DeleteBatteryAsync(long batteryId);
     }
 }

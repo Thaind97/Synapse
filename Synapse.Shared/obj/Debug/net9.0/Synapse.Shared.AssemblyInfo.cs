@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Synapse.Shared")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7fdd08e60b10f8560f0c2b057a0e187f0d1531e9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+be74830783c4b29072a1452ea4f4d0ddfb69a25c")]
 [assembly: System.Reflection.AssemblyProductAttribute("Synapse.Shared")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Synapse.Shared")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
