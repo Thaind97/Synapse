@@ -1,0 +1,11 @@
+D:\HSG3\Synapse\Synapse.Services\bin\Debug\net8.0\Synapse.Services.deps.json
+D:\HSG3\Synapse\Synapse.Services\bin\Debug\net8.0\Synapse.Services.dll
+D:\HSG3\Synapse\Synapse.Services\bin\Debug\net8.0\Synapse.Services.pdb
+D:\HSG3\Synapse\Synapse.Services\obj\Debug\net8.0\Synapse.Services.GeneratedMSBuildEditorConfig.editorconfig
+D:\HSG3\Synapse\Synapse.Services\obj\Debug\net8.0\Synapse.Services.AssemblyInfoInputs.cache
+D:\HSG3\Synapse\Synapse.Services\obj\Debug\net8.0\Synapse.Services.AssemblyInfo.cs
+D:\HSG3\Synapse\Synapse.Services\obj\Debug\net8.0\Synapse.Services.csproj.CoreCompileInputs.cache
+D:\HSG3\Synapse\Synapse.Services\obj\Debug\net8.0\Synapse.Services.dll
+D:\HSG3\Synapse\Synapse.Services\obj\Debug\net8.0\refint\Synapse.Services.dll
+D:\HSG3\Synapse\Synapse.Services\obj\Debug\net8.0\Synapse.Services.pdb
+D:\HSG3\Synapse\Synapse.Services\obj\Debug\net8.0\ref\Synapse.Services.dll

@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+	</resheader>
+	<data name="Login" xml:space="preserve">
+    <value>Login</value>
+  </data>
+	<data name="SignIn" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
+	<data name="SignInToApp" xml:space="preserve">
+    <value>Sign in to App</value>
+  </data>
+	<data name="SignUp" xml:space="preserve">
+    <value>Sign Up</value>
+  </data>
+	<data name="SignUpDescription" xml:space="preserve">
+    <value>Enter your personal info</value>
+  </data>
+	<data name="Username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+	<data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+	<data name="OrUseYourEmail" xml:space="preserve">
+    <value>or use your email</value>
+  </data>
+	<data name="Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+	<data name="Maintenance" xml:space="preserve">
+    <value>Maintenance</value>
+  </data>
+	<data name="EVControl" xml:space="preserve">
+    <value>EV Control</value>
+  </data>
+	<data name="SiteManagement" xml:space="preserve">
+    <value>Site Management</value>
+  </data>
+	<data name="DeviceManagement" xml:space="preserve">
+    <value>Device Management</value>
+  </data>
+	<data name="Alerts" xml:space="preserve">
+    <value>Alerts</value>
+  </data>
+	<data name="Policy" xml:space="preserve">
+    <value>Policy</value>
+  </data>
+	<data name="System" xml:space="preserve">
+    <value>System</value>
+  </data>
+	<data name="Logout" xml:space="preserve">
+    <value>Logout</value>
+  </data>
+	<data name="Search" xml:space="preserve">
+    <value>Search...</value>
+  </data>
+	<data name="Hi" xml:space="preserve">
+    <value>Hi</value>
+  </data>
+	<data name="InvalidCredentials" xml:space="preserve">
+    <value>Invalid username or password.</value>
+  </data>
+</root>

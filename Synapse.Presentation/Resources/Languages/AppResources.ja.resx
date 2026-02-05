@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+	</resheader>
+	<data name="Login" xml:space="preserve">
+    <value>ログイン</value>
+  </data>
+	<data name="SignIn" xml:space="preserve">
+    <value>サインイン</value>
+  </data>
+	<data name="SignInToApp" xml:space="preserve">
+    <value>アプリにサインイン</value>
+  </data>
+	<data name="SignUp" xml:space="preserve">
+    <value>新規登録</value>
+  </data>
+	<data name="SignUpDescription" xml:space="preserve">
+    <value>個人情報を入力してください</value>
+  </data>
+	<data name="Username" xml:space="preserve">
+    <value>ユーザー名</value>
+  </data>
+	<data name="Password" xml:space="preserve">
+    <value>パスワード</value>
+  </data>
+	<data name="OrUseYourEmail" xml:space="preserve">
+    <value>またはメールを使用</value>
+  </data>
+	<data name="Dashboard" xml:space="preserve">
+    <value>ダッシュボード</value>
+  </data>
+	<data name="Maintenance" xml:space="preserve">
+    <value>メンテナンス</value>
+  </data>
+	<data name="EVControl" xml:space="preserve">
+    <value>EV制御</value>
+  </data>
+	<data name="SiteManagement" xml:space="preserve">
+    <value>サイト管理</value>
+  </data>
+	<data name="DeviceManagement" xml:space="preserve">
+    <value>デバイス管理</value>
+  </data>
+	<data name="Alerts" xml:space="preserve">
+    <value>アラート</value>
+  </data>
+	<data name="Policy" xml:space="preserve">
+    <value>ポリシー</value>
+  </data>
+	<data name="System" xml:space="preserve">
+    <value>システム</value>
+  </data>
+	<data name="Logout" xml:space="preserve">
+    <value>ログアウト</value>
+  </data>
+	<data name="Search" xml:space="preserve">
+    <value>検索...</value>
+  </data>
+	<data name="Hi" xml:space="preserve">
+    <value>こんにちは</value>
+  </data>
+	<data name="InvalidCredentials" xml:space="preserve">
+    <value>ユーザー名またはパスワードが正しくありません。</value>
+  </data>
+</root>

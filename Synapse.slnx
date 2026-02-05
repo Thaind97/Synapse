@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/BuildingBlocks/">
+    <Project Path="Synapse.HttpClientCls/Synapse.ClientCls.csproj" />
+    <Project Path="Synapse.Shared/Synapse.Shared.csproj" Id="dd8f622b-8ef6-4462-827c-6251e960b3d1" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="Synapse.Infrastructure/Synapse.Infrastructure.csproj" />
+    <Project Path="Synapse.Models/Synapse.Models.csproj" />
+  </Folder>
+  <Folder Name="/Presentation/">
+    <Project Path="Synapse.Presentation/Synapse.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/Services/">
+    <Project Path="Synapse.Services/Synapse.Services.csproj" />
+  </Folder>
+</Solution>

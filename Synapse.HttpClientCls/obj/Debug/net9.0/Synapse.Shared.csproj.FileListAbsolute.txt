@@ -1,0 +1,5 @@
+D:\HSG3\Synapse\Synapse.Shared\obj\Debug\net9.0\Synapse.Shared.csproj.AssemblyReference.cache
+D:\HSG3\Synapse\Synapse.Shared\obj\Debug\net9.0\Synapse.Shared.GeneratedMSBuildEditorConfig.editorconfig
+D:\HSG3\Synapse\Synapse.Shared\obj\Debug\net9.0\Synapse.Shared.AssemblyInfoInputs.cache
+D:\HSG3\Synapse\Synapse.Shared\obj\Debug\net9.0\Synapse.Shared.AssemblyInfo.cs
+D:\HSG3\Synapse\Synapse.Shared\obj\Debug\net9.0\Synapse.Shared.csproj.CoreCompileInputs.cache

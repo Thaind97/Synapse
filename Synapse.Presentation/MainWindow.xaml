@@ -1,0 +1,173 @@
+﻿<Window x:Class="Synapse.Presentation.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:Synapse.Presentation.Views"
+        xmlns:viewmodels="clr-namespace:Synapse.Presentation.ViewModels"
+        mc:Ignorable="d"
+        Title="Synapse Dashboard"
+        Height="900"
+        Width="1440"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Resources/icon.ico">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type viewmodels:DashboardViewModel}">
+            <views:DashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewmodels:EVControlViewModel}">
+            <views:EVControlView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewmodels:SequenceEditorViewModel}">
+            <views:SequenceEditorView />
+        </DataTemplate>
+
+        <SolidColorBrush x:Key="SidebarBrush" Color="#00A699" />
+        <SolidColorBrush x:Key="SidebarDarkBrush" Color="#008C82" />
+        <SolidColorBrush x:Key="BackgroundBrush" Color="#F4F6F9" />
+
+        <Style TargetType="Button" x:Key="MenuButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="20,15" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#008C82" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="Button" x:Key="MenuButtonDashboard" BasedOn="{StaticResource MenuButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SelectedMenuKey}" Value="Dashboard">
+                    <Setter Property="Background" Value="#008C82" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="Button" x:Key="MenuButtonEVControl" BasedOn="{StaticResource MenuButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SelectedMenuKey}" Value="EVControl">
+                    <Setter Property="Background" Value="#008C82" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="Button" x:Key="MenuButtonSiteManagement" BasedOn="{StaticResource MenuButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SelectedMenuKey}" Value="SiteManagement">
+                    <Setter Property="Background" Value="#008C82" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0">
+                    <Border Height="80" Padding="20">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="40" Height="40" Fill="White" />
+                            <TextBlock Text="Headspring"
+                                       Foreground="White"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0,0,0"
+                                       FontSize="18" />
+                        </StackPanel>
+                    </Border>
+
+                    <Button x:Name="BtnDashboard"
+                            Style="{StaticResource MenuButtonDashboard}"
+                            Content="{Binding Localization[Dashboard]}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="Dashboard"
+                            Click="BtnDashboard_Click" />
+                    <Button Style="{StaticResource MenuButton}"
+                            Content="{Binding Localization[Maintenance]}" />
+                    <Button x:Name="BtnEVControl"
+                            Style="{StaticResource MenuButtonEVControl}"
+                            Content="{Binding Localization[EVControl]}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="EVControl"
+                            Click="BtnEVControl_Click" />
+                    <Button x:Name="BtnSiteManagement"
+                            Style="{StaticResource MenuButtonSiteManagement}"
+                            Content="{Binding Localization[SiteManagement]}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="SequenceEditor"
+                            Click="BtnSiteManagement_Click" />
+                    <Button Style="{StaticResource MenuButton}"
+                            Content="{Binding Localization[DeviceManagement]}" />
+                    <Button Style="{StaticResource MenuButton}"
+                            Content="{Binding Localization[Alerts]}" />
+                    <Button Style="{StaticResource MenuButton}"
+                            Content="{Binding Localization[Policy]}" />
+                    <Button Style="{StaticResource MenuButton}"
+                            Content="{Binding Localization[System]}" />
+                </StackPanel>
+
+                <Button Grid.Row="1"
+                        Style="{StaticResource MenuButton}"
+                        Content="{Binding Localization[Logout]}"
+                        Command="{Binding LogoutCommand}"
+                        Margin="0,0,0,20" />
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="White" Padding="20,0">
+                <Grid>
+                    <TextBlock Text="{Binding CurrentPageTitle}"
+                               VerticalAlignment="Center"
+                               FontSize="16"
+                               FontWeight="SemiBold" />
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                        <Border Background="#F4F6F9"
+                                CornerRadius="15"
+                                Width="250"
+                                Height="35"
+                                Padding="10,0">
+                            <TextBlock Text="{Binding Localization[Search]}"
+                                       VerticalAlignment="Center"
+                                       Foreground="#999" />
+                        </Border>
+                        <Ellipse Width="30" Height="30" Fill="#CCC" Margin="20,0,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ContentControl Grid.Row="1" Content="{Binding CurrentView}" />
+        </Grid>
+    </Grid>
+</Window>

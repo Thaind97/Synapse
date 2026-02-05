@@ -1,0 +1,220 @@
+<UserControl x:Class="Synapse.Presentation.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="850" d:DesignWidth="1200" Background="#F4F6F9">
+
+    <UserControl.Resources>
+        <!-- Card Style -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="10" Color="#DDD" ShadowDepth="2" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="5,20,5,10"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            
+            <!-- Section 1: Data Overview -->
+            <TextBlock Text="Data Overview" Style="{StaticResource SectionTitle}"/>
+            <ItemsControl ItemsSource="{Binding Data.TopStats}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="4"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Icon Placeholder -->
+                                <Border Width="40" Height="40" CornerRadius="10" Margin="0,0,15,0"> 
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                           <Setter Property="Background" Value="#00A699"/> <!-- Default -->
+                                           <Style.Triggers>
+                                               <DataTrigger Binding="{Binding Title}" Value="Active Alarms">
+                                                   <Setter Property="Background" Value="#FF5722"/>
+                                               </DataTrigger>
+                                               <DataTrigger Binding="{Binding Title}" Value="Total Capacity (GWp)">
+                                                   <Setter Property="Background" Value="#FFC107"/>
+                                               </DataTrigger>
+                                           </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
+                                
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding Title}" Foreground="#888" FontSize="12"/>
+                                    <TextBlock Text="{Binding Value}" FontSize="24" FontWeight="Bold" Margin="0,5"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Total +" Foreground="#888" FontSize="10"/>
+                                        <TextBlock Text="{Binding TrendValue}" Foreground="#00A699" FontWeight="Bold" FontSize="10" Margin="5,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Section 2: Running Status -->
+            <TextBlock Text="Running Status" Style="{StaticResource SectionTitle}"/>
+            <ItemsControl ItemsSource="{Binding Data.RunningStatuses}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="3"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                    <Border Width="30" Height="30" CornerRadius="15" BorderThickness="1" BorderBrush="#DDD" >
+                                        <TextBlock Text="⚡" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Margin="10,0" FontWeight="SemiBold"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Value}" FontSize="28" FontWeight="Bold"/>
+                                
+                                <ItemsControl ItemsSource="{Binding Details}" Margin="0,15,0,0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,0,20,0">
+                                                <TextBlock Text="{Binding Label}" Foreground="#999" FontSize="10"/>
+                                                <TextBlock Text="{Binding Value}" FontWeight="Bold" FontSize="12"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Section 3: Charts -->
+            <Grid Height="300" Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Line Chart -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="Power Analysis" FontWeight="SemiBold"/>
+                            <StackPanel Orientation="Horizontal" Margin="20,0">
+                                <Ellipse Width="8" Height="8" Fill="#2196F3" Margin="0,0,5,0"/>
+                                <TextBlock Text="Solar" Foreground="#666" FontSize="12"/>
+                                <Ellipse Width="8" Height="8" Fill="#9C27B0" Margin="15,0,5,0"/>
+                                <TextBlock Text="Storage" Foreground="#666" FontSize="12"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Pie/Gauge -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <Grid>
+                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Device Alerts" FontWeight="SemiBold"/>
+                        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                             <TextBlock Text="22" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                 <TextBlock Text="Total" FontSize="10" Foreground="#999" HorizontalAlignment="Center"/>
+                         </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Section 4: Bottom -->
+            <Grid Height="200" Margin="0,10,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                     <StackPanel>
+                         <TextBlock Text="CO2 Reduction" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                         <UniformGrid Columns="3">
+                             <StackPanel HorizontalAlignment="Center">
+                                 <Ellipse Width="40" Height="40" Fill="#00A699"/>
+                                 <TextBlock Text="3124" HorizontalAlignment="Center" FontWeight="Bold" Margin="0,5"/>
+                                 <TextBlock Text="Reduced" HorizontalAlignment="Center" Foreground="#999"/>
+                             </StackPanel>
+                              <StackPanel HorizontalAlignment="Center">
+                                 <Ellipse Width="40" Height="40" Fill="#FFC107"/>
+                                 <TextBlock Text="45321" HorizontalAlignment="Center" FontWeight="Bold" Margin="0,5"/>
+                                 <TextBlock Text="Coal" HorizontalAlignment="Center" Foreground="#999"/>
+                             </StackPanel>
+                              <StackPanel HorizontalAlignment="Center">
+                                 <Ellipse Width="40" Height="40" Fill="#8BC34A"/>
+                                 <TextBlock Text="622" HorizontalAlignment="Center" FontWeight="Bold" Margin="0,5"/>
+                                 <TextBlock Text="Trees" HorizontalAlignment="Center" Foreground="#999"/>
+                             </StackPanel>
+                         </UniformGrid>
+                     </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Ranking" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <ItemsControl ItemsSource="{Binding Data.Rankings}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Background="#EEE" Width="20" Height="20" CornerRadius="10">
+                                            <TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="1" Text="{Binding}" Margin="10,0"/>
+                                        <TextBlock Grid.Column="2" Text="9.0h" FontWeight="Bold"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+            
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

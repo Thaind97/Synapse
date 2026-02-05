@@ -1,0 +1,15 @@
+D:\HSG3\Synapse\Synapse.Infrastructure\bin\Debug\net8.0\Synapse.Infrastructure.deps.json
+D:\HSG3\Synapse\Synapse.Infrastructure\bin\Debug\net8.0\Synapse.Infrastructure.dll
+D:\HSG3\Synapse\Synapse.Infrastructure\bin\Debug\net8.0\Synapse.Infrastructure.pdb
+D:\HSG3\Synapse\Synapse.Infrastructure\bin\Debug\net8.0\Synapse.Services.dll
+D:\HSG3\Synapse\Synapse.Infrastructure\bin\Debug\net8.0\Synapse.Services.pdb
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\Synapse.Infrastructure.csproj.AssemblyReference.cache
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\Synapse.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\Synapse.Infrastructure.AssemblyInfoInputs.cache
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\Synapse.Infrastructure.AssemblyInfo.cs
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\Synapse.Infrastructure.csproj.CoreCompileInputs.cache
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\Synapse..2AB36238.Up2Date
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\Synapse.Infrastructure.dll
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\refint\Synapse.Infrastructure.dll
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\Synapse.Infrastructure.pdb
+D:\HSG3\Synapse\Synapse.Infrastructure\obj\Debug\net8.0\ref\Synapse.Infrastructure.dll
