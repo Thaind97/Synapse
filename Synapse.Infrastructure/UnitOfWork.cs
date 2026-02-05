@@ -2,6 +2,7 @@
 using Synapse.Infrastructure.Entities;
 using Synapse.Infrastructure.Persistence;
 using Synapse.Infrastructure.Repository.Implemment;
+using System.Threading.Tasks;
 
 namespace Synapse.Infrastructure
 {
@@ -24,31 +25,37 @@ namespace Synapse.Infrastructure
             GC.SuppressFinalize(this);
         }
 
-        public void CreateTransaction()
+        public async Task BeginTransactionAsync()
         {
-            _objTran = _dbContext.Database.BeginTransaction();
+            _objTran = await _dbContext.Database.BeginTransactionAsync();
         }
 
-        public void Commit()
+        public async Task CommitAsync()
         {
             if (_objTran != null)
             {
-                _objTran.Commit();
+                await _objTran.CommitAsync();
+                await _objTran.DisposeAsync();
             }
         }
 
-        public void Rollback()
+        public async Task RollbackAsync()
         {
             if (_objTran != null)
             {
-                _objTran.Rollback();
-                _objTran.Dispose();
+                await _objTran.RollbackAsync();
+                await _objTran.DisposeAsync();
             }
         }
 
         public void Save()
         {
             _dbContext.SaveChanges();
+        }
+
+        public Task SaveAsync()
+        {
+            return _dbContext.SaveChangesAsync();
         }
 
         protected virtual void Dispose(bool disposing)
@@ -76,6 +83,37 @@ namespace Synapse.Infrastructure
                 _repositories.Add(type, repositoryInstance);
             }
             return (BaseRepository<TEntity>)_repositories[type];
+        }
+
+        public async Task ExecuteInTransactionAsync(Func<Task> action)
+        {
+            await BeginTransactionAsync();
+            try
+            {
+                await action();
+                await CommitAsync();
+            }
+            catch
+            {
+                await RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action)
+        {
+            await BeginTransactionAsync();
+            try
+            {
+                var result = await action();
+                await CommitAsync();
+                return result;
+            }
+            catch
+            {
+                await RollbackAsync();
+                throw;
+            }
         }
     }
 }

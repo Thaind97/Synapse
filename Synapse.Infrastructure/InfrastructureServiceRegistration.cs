@@ -19,6 +19,8 @@ namespace Synapse.Infrastructure
             // Register DbContextFactory for safe multi-threaded operations
             services.AddDbContextFactory<SynapseDbContext>();
 
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+
             return services;
         }
     }
