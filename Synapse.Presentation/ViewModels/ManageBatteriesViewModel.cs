@@ -3,7 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using Synapse.Infrastructure.Entities;
 using Synapse.Services.Services.Abstraction;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace Synapse.Presentation.ViewModels
 {
@@ -22,9 +24,6 @@ namespace Synapse.Presentation.ViewModels
             DeleteBatteryCommand = new AsyncRelayCommand(DeleteBatteryAsync, () => SelectedBattery != null);
             AssignCommand = new AsyncRelayCommand(AssignAsync, () => SelectedBattery != null && SelectedSequence != null);
             UnassignCommand = new AsyncRelayCommand(UnassignAsync, () => SelectedAssignment != null);
-
-            // Start loading data (fire-and-forget)
-            _ = LoadDataAsync();
         }
 
         public ObservableCollection<Battery> Batteries { get; }
@@ -78,26 +77,43 @@ namespace Synapse.Presentation.ViewModels
 
         public async Task LoadDataAsync()
         {
-            var beds = await _sequenceService.GetBatteriesAsync();
-            Batteries.Clear();
-            foreach (var b in beds) Batteries.Add(b);
+            try
+            {
+                var beds = await _sequenceService.GetBatteriesAsync();
+                Batteries.Clear();
+                foreach (var b in beds) Batteries.Add(b);
 
-            var seqs = await _sequenceService.GetAllSequencesAsync();
-            Sequences.Clear();
-            foreach (var s in seqs) Sequences.Add(s);
+                var seqs = await _sequenceService.GetAllSequencesAsync();
+                Sequences.Clear();
+                foreach (var s in seqs) Sequences.Add(s);
 
-            var assigns = await _sequenceService.GetAssignmentsAsync();
-            Assignments.Clear();
-            foreach (var a in assigns) Assignments.Add(a);
+                var assigns = await _sequenceService.GetAssignmentsAsync();
+                Assignments.Clear();
+                foreach (var a in assigns) Assignments.Add(a);
 
-            // select defaults
-            if (Batteries.Count > 0 && SelectedBattery == null) SelectedBattery = Batteries[0];
-            if (Sequences.Count > 0 && SelectedSequence == null) SelectedSequence = Sequences[0];
+                // select defaults
+                if (Batteries.Count > 0 && SelectedBattery == null) SelectedBattery = Batteries[0];
+                if (Sequences.Count > 0 && SelectedSequence == null) SelectedSequence = Sequences[0];
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Kh?ng th? t?i d? li?u: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private async Task AddBatteryAsync()
         {
-            var newB = new Battery { Channel = Batteries.Count + 1, Name = $"Battery {Batteries.Count + 1}" };
+            var nextChannel = Enumerable.Range(1, 24)
+                .Except(Batteries.Select(b => b.Channel))
+                .FirstOrDefault();
+
+            if (nextChannel == 0)
+            {
+                MessageBox.Show("?? c? ?? 24 battery.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var newB = new Battery { Channel = nextChannel, Name = $"Battery {nextChannel}" };
             await _sequenceService.CreateBatteryAsync(newB);
             Batteries.Add(newB);
             SelectedBattery = newB;
