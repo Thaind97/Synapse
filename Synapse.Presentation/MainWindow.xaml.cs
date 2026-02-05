@@ -33,4 +33,12 @@ public partial class MainWindow : Window
             vm.NavigateTo("SequenceEditor");
         }
     }
+
+    private void BtnBatteryMonitor_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            vm.NavigateTo("BatteryMonitor");
+        }
+    }
 }

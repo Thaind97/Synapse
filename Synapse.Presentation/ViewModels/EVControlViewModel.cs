@@ -18,12 +18,12 @@ namespace Synapse.Presentation.ViewModels
     {
         private bool _isRunning;
         private CancellationTokenSource? _cts;
-        private BatteryInfo? _selectedBattery;
+        private BatteryInfoModel? _selectedBattery;
         private readonly IpcManager _ipcManager;
         private Timer? _uiUpdateTimer;
 
-        public ObservableCollection<BatteryInfo> Batteries { get; set; } = new();
-        public ObservableCollection<StepItem> Steps { get; set; } = new();
+        public ObservableCollection<BatteryInfoModel> Batteries { get; set; } = new();
+        public ObservableCollection<StepItemModel> Steps { get; set; } = new();
         public SeriesCollection OverviewSeries { get; set; } = new();
         public string[] OverviewLabels { get; set; } = Array.Empty<string>();
 
@@ -45,7 +45,7 @@ namespace Synapse.Presentation.ViewModels
 
         public string StatusDescription => IsRunning ? "SYSTEM RUNNING - REALTIME IPC (SHARED MEMORY)" : "SYSTEM IDLE";
 
-        public BatteryInfo? SelectedBattery
+        public BatteryInfoModel? SelectedBattery
         {
             get => _selectedBattery;
             set
@@ -68,7 +68,7 @@ namespace Synapse.Presentation.ViewModels
             
             StartCommand = new RelayCommand(StartRealtime);
             StopCommand = new RelayCommand(StopRealtime);
-            SelectBatteryCommand = new RelayCommand<BatteryInfo>(battery => SelectedBattery = battery);
+            SelectBatteryCommand = new RelayCommand<BatteryInfoModel>(battery => SelectedBattery = battery);
 
             InitializeView();
         }
@@ -79,7 +79,7 @@ namespace Synapse.Presentation.ViewModels
             for (int i = 1; i <= 24; i++)
             {
                 var id = i.ToString("D2");
-                Batteries.Add(new BatteryInfo
+                Batteries.Add(new BatteryInfoModel
                 {
                     Name = $"Battery {id}",
                     Voltage = 0,
@@ -91,10 +91,10 @@ namespace Synapse.Presentation.ViewModels
 
             SelectedBattery = Batteries.FirstOrDefault();
 
-            Steps.Add(new StepItem { Step = "IPC Warmup", Description = "Initializing Shared Memory segments..." });
-            Steps.Add(new StepItem { Step = "Service Sync", Description = "Broadcasting thread handles to IPC manager" });
-            Steps.Add(new StepItem { Step = "Realtime Data", Description = "Polling MMViewAccessor at 50ms interval" });
-            Steps.Add(new StepItem { Step = "Logging", Description = "Writing IPC transactions to binlog" });
+            Steps.Add(new StepItemModel { Step = "IPC Warmup", Description = "Initializing Shared Memory segments..." });
+            Steps.Add(new StepItemModel { Step = "Service Sync", Description = "Broadcasting thread handles to IPC manager" });
+            Steps.Add(new StepItemModel { Step = "Realtime Data", Description = "Polling MMViewAccessor at 50ms interval" });
+            Steps.Add(new StepItemModel { Step = "Logging", Description = "Writing IPC transactions to binlog" });
 
             OverviewLabels = Enumerable.Range(0, 20).Select(i => i.ToString()).ToArray();
         }

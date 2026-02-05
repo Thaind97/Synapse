@@ -15,5 +15,8 @@
         <DataTemplate DataType="{x:Type viewmodels:SequenceEditorViewModel}">
             <views:SequenceEditorView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type viewmodels:BatteryMonitorViewModel}">
+            <views:BatteryMonitorView/>
+        </DataTemplate>
     </Application.Resources>
 </Application>

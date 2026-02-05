@@ -45,6 +45,9 @@
 	<data name="EVControl" xml:space="preserve">
     <value>EV制御</value>
   </data>
+	<data name="BatteryMonitor" xml:space="preserve">
+    <value>バッテリーモニター</value>
+  </data>
 	<data name="SiteManagement" xml:space="preserve">
     <value>サイト管理</value>
   </data>

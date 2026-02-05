@@ -84,6 +84,10 @@ namespace Synapse.Presentation.ViewModels
                     }
                     SetCurrentPage("ManageBatteries");
                     break;
+                case "BatteryMonitor":
+                    // Assign ViewModel; DataTemplate in App.xaml will render BatteryMonitorView
+                    CurrentView = new BatteryMonitorViewModel();
+                    break;
                 default:
                     break;
             }

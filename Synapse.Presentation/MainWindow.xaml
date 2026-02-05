@@ -121,6 +121,7 @@
                             Command="{Binding NavigateCommand}"
                             CommandParameter="SequenceEditor"
                             Click="BtnSiteManagement_Click" />
+                    <Button x:Name="BtnBatteryMonitor" Style="{StaticResource MenuButton}" Content="{Binding Localization[BatteryMonitor]}" Command="{Binding NavigateCommand}" CommandParameter="BatteryMonitor" Click="BtnBatteryMonitor_Click"/>
                     <Button Style="{StaticResource MenuButton}"
                             Content="{Binding Localization[DeviceManagement]}" />
                     <Button x:Name="BtnManageBatteries"

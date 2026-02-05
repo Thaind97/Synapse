@@ -1,0 +1,428 @@
+<UserControl x:Class="Synapse.Presentation.Views.BatteryMonitorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             xmlns:viewmodels="clr-namespace:Synapse.Presentation.ViewModels"
+             xmlns:models="clr-namespace:Synapse.Presentation.Models"
+             mc:Ignorable="d" 
+             d:DesignHeight="900" d:DesignWidth="1200" 
+             Background="#F5F5F5"
+             d:DataContext="{d:DesignInstance Type=viewmodels:BatteryMonitorViewModel, IsDesignTimeCreatable=False}">
+
+    <UserControl.Resources>
+        <!-- Colors -->
+        <SolidColorBrush x:Key="NormalBorderBrush" Color="#4CAF50"/>
+        <SolidColorBrush x:Key="WarningBorderBrush" Color="#FF9800"/>
+        <SolidColorBrush x:Key="ErrorBorderBrush" Color="#F44336"/>
+        <SolidColorBrush x:Key="DisabledBrush" Color="#9E9E9E"/>
+        <SolidColorBrush x:Key="SelectedBorderBrush" Color="#2196F3"/>
+        <SolidColorBrush x:Key="CardBackgroundBrush" Color="White"/>
+        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FAFAFA"/>
+
+        <!-- Battery Cell Card Style -->
+        <Style x:Key="BatteryCellCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#4CAF50"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="MinHeight" Value="80"/>
+        </Style>
+
+        <!-- Control Button Style -->
+        <Style x:Key="ControlButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Margin" Value="4,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#E0E0E0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Section Header Style -->
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <!-- Panel Border Style -->
+        <Style x:Key="PanelBorder" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="12"/>
+        </Style>
+
+        <!-- Log Item Style -->
+        <Style x:Key="LogItemStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Level}" Value="Error">
+                    <Setter Property="Foreground" Value="#F44336"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Level}" Value="Warning">
+                    <Setter Property="Foreground" Value="#FF9800"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Level}" Value="Info">
+                    <Setter Property="Foreground" Value="#2196F3"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Step Item Converters and Styles -->
+        <Style x:Key="StepItemBorder" TargetType="Border">
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Background" Value="White"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="Completed">
+                    <Setter Property="BorderBrush" Value="#4CAF50"/>
+                    <Setter Property="Background" Value="#E8F5E9"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Running">
+                    <Setter Property="BorderBrush" Value="#4CAF50"/>
+                    <Setter Property="Background" Value="#C8E6C9"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Pending">
+                    <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                    <Setter Property="Background" Value="White"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>      <!-- Sidebar placeholder + Control buttons -->
+            <RowDefinition Height="Auto"/>      <!-- Battery Grid -->
+            <RowDefinition Height="*"/>         <!-- Chart + Right Panel -->
+            <RowDefinition Height="Auto"/>      <!-- Bottom Panel (Logs + Stats) -->
+        </Grid.RowDefinitions>
+
+        <!-- Row 0: Top Control Bar -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Sidebar placeholder + Control Buttons -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Border Background="#F0F0F0" CornerRadius="4" Padding="12,8" Margin="0,0,16,0">
+                    <TextBlock Text="Side bar" FontWeight="Medium" VerticalAlignment="Center"/>
+                </Border>
+
+                <Button Style="{StaticResource ControlButton}" Command="{Binding StartCommand}" Content="Start"/>
+                <Button Style="{StaticResource ControlButton}" Command="{Binding StopCommand}" Content="Stop"/>
+                <Button Style="{StaticResource ControlButton}" Command="{Binding PauseResumeCommand}" Content="Pause/Resume"/>
+            </StackPanel>
+
+            <!-- Right: Search and Filter -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                 BorderThickness="0" Width="150" VerticalAlignment="Center"
+                                 Background="Transparent"/>
+                        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                    </StackPanel>
+                </Border>
+                <Button Style="{StaticResource ControlButton}" Command="{Binding FilterCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🔧" Margin="0,0,4,0"/>
+                        <TextBlock Text="Filter"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Row 1: Battery Grid (2 rows x 8 columns = 16 cells) -->
+        <Border Grid.Row="1" Style="{StaticResource PanelBorder}" Margin="0,0,0,12">
+            <ItemsControl ItemsSource="{Binding BatteryCells}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="2" Columns="8"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type models:BatteryCellModel}">
+                        <Border x:Name="CellBorder" Style="{StaticResource BatteryCellCard}">
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" 
+                                              Command="{Binding DataContext.SelectBatteryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              CommandParameter="{Binding}"/>
+                            </Border.InputBindings>
+                            
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Battery Name -->
+                                <TextBlock Grid.Row="0" Text="{Binding Name}" FontSize="11" Foreground="#666666"/>
+
+                                <!-- Voltage (Large) -->
+                                <TextBlock Grid.Row="1" Text="{Binding VoltageDisplay}" FontSize="20" FontWeight="Bold" Foreground="#333333"/>
+
+                                <!-- Current and Temperature -->
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding CurrentDisplay}" FontSize="11" Foreground="#666666" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding TemperatureDisplay}" FontSize="11" Foreground="#666666"/>
+                                </StackPanel>
+
+                                <!-- Mini Chart Placeholder -->
+                                <Canvas Grid.Row="3" Height="20" Margin="0,4,0,0">
+                                    <Polyline x:Name="MiniChart" Stroke="#4CAF50" StrokeThickness="1.5"
+                                              Points="0,15 10,12 20,18 30,10 40,14 50,8 60,12"/>
+                                </Canvas>
+                            </Grid>
+                        </Border>
+
+                        <DataTemplate.Triggers>
+                            <!-- Normal state -->
+                            <DataTrigger Binding="{Binding Status}" Value="Normal">
+                                <Setter TargetName="CellBorder" Property="BorderBrush" Value="#4CAF50"/>
+                            </DataTrigger>
+                            <!-- Warning state -->
+                            <DataTrigger Binding="{Binding Status}" Value="Warning">
+                                <Setter TargetName="CellBorder" Property="BorderBrush" Value="#FF9800"/>
+                                <Setter TargetName="MiniChart" Property="Stroke" Value="#FF9800"/>
+                            </DataTrigger>
+                            <!-- Error state -->
+                            <DataTrigger Binding="{Binding Status}" Value="Error">
+                                <Setter TargetName="CellBorder" Property="BorderBrush" Value="#F44336"/>
+                                <Setter TargetName="MiniChart" Property="Stroke" Value="#F44336"/>
+                            </DataTrigger>
+                            <!-- Disabled state -->
+                            <DataTrigger Binding="{Binding Status}" Value="Disabled">
+                                <Setter TargetName="CellBorder" Property="BorderBrush" Value="#E0E0E0"/>
+                                <Setter TargetName="CellBorder" Property="Background" Value="#F5F5F5"/>
+                                <Setter TargetName="MiniChart" Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                            <!-- Selected state -->
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter TargetName="CellBorder" Property="BorderBrush" Value="#2196F3"/>
+                                <Setter TargetName="CellBorder" Property="BorderThickness" Value="3"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <!-- Row 2: Chart + Right Panel -->
+        <Grid Grid.Row="2" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>        <!-- Chart -->
+                <ColumnDefinition Width="280"/>      <!-- Right Panel -->
+            </Grid.ColumnDefinitions>
+
+            <!-- Chart Panel -->
+            <Border Grid.Column="0" Style="{StaticResource PanelBorder}" Margin="0,0,12,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Chart Header -->
+                    <TextBlock Grid.Row="0" Text="{Binding SelectedBatteryName}" Style="{StaticResource SectionHeader}"/>
+
+                    <!-- LiveCharts Chart -->
+                    <lvc:CartesianChart Grid.Row="1" Series="{Binding ChartSeries}" LegendLocation="None">
+                        <lvc:CartesianChart.AxisX>
+                            <lvc:Axis Title="Time (s)" Labels="{Binding ChartLabels}" FontSize="11">
+                                <lvc:Axis.Separator>
+                                    <lvc:Separator Step="5" StrokeThickness="0.5" Stroke="#E0E0E0"/>
+                                </lvc:Axis.Separator>
+                            </lvc:Axis>
+                        </lvc:CartesianChart.AxisX>
+                        <lvc:CartesianChart.AxisY>
+                            <!-- Primary Y Axis (Voltage) -->
+                            <lvc:Axis Title="Voltage (V)" Position="LeftBottom" LabelFormatter="{Binding VoltageFormatter}" FontSize="11">
+                                <lvc:Axis.Separator>
+                                    <lvc:Separator StrokeThickness="0.5" Stroke="#E0E0E0"/>
+                                </lvc:Axis.Separator>
+                            </lvc:Axis>
+                            <!-- Secondary Y Axis (Current) -->
+                            <lvc:Axis Title="Current (A)" Position="RightTop" LabelFormatter="{Binding CurrentFormatter}" FontSize="11" Foreground="#F97316"/>
+                        </lvc:CartesianChart.AxisY>
+                    </lvc:CartesianChart>
+                </Grid>
+            </Border>
+
+            <!-- Right Panel -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>  <!-- Measurement Values -->
+                    <RowDefinition Height="*"/>     <!-- Step Table -->
+                </Grid.RowDefinitions>
+
+                <!-- Measurement Value Panel -->
+                <Border Grid.Row="0" Style="{StaticResource PanelBorder}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Measurement Value" Style="{StaticResource SectionHeader}"/>
+
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding MeasurementValues}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="3" Columns="2"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:MeasurementValueModel}">
+                                    <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="2" Padding="8">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding Label}" FontSize="11" Foreground="#666666" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="{Binding DisplayValue}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Border>
+
+                <!-- Step Table Panel -->
+                <Border Grid.Row="1" Style="{StaticResource PanelBorder}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Step Table" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Grid.Row="1" Text="{Binding StepTableElapsedDisplay}" FontSize="11" Foreground="#666666" Margin="0,0,0,8"/>
+
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding StepTableItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:StepTableItemModel}">
+                                        <Border Style="{StaticResource StepItemBorder}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+
+                                                <!-- Checkmark for completed -->
+                                                <TextBlock Grid.Column="1" Text="✓" Foreground="#4CAF50" FontSize="16" 
+                                                           VerticalAlignment="Center" Visibility="Collapsed"
+                                                           x:Name="CheckMark"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Status}" Value="Completed">
+                                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- Row 3: Bottom Panel (Logs + Stats) -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>        <!-- System Logs -->
+                <ColumnDefinition Width="280"/>      <!-- Stats -->
+            </Grid.ColumnDefinitions>
+
+            <!-- System Logs Panel -->
+            <Border Grid.Column="0" Style="{StaticResource PanelBorder}" Margin="0,0,12,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="120"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="{Binding SelectedBatteryName, StringFormat='System logs – {0}'}" Style="{StaticResource SectionHeader}"/>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding SystemLogs}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:SystemLogModel}">
+                                    <TextBlock Style="{StaticResource LogItemStyle}" Text="{Binding FullDisplay}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Stats Panel -->
+            <Border Grid.Column="1" Style="{StaticResource PanelBorder}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Stats" Style="{StaticResource SectionHeader}"/>
+
+                    <StackPanel Grid.Row="1">
+                        <StackPanel Orientation="Horizontal" Margin="0,4">
+                            <TextBlock Text="Pattern name: " Foreground="#666666"/>
+                            <TextBlock Text="{Binding Stats.PatternName}" FontWeight="Medium"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,4">
+                            <TextBlock Text="Elapsed: " Foreground="#666666"/>
+                            <TextBlock Text="{Binding Stats.ElapsedDisplay}" FontWeight="Medium"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
