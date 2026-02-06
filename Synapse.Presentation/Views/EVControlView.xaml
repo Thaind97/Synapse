@@ -4,11 +4,40 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             xmlns:models="clr-namespace:Synapse.Presentation.Models"
+             xmlns:enums="clr-namespace:Synapse.Shared.Enums;assembly=Synapse.Shared"
              mc:Ignorable="d" 
-             d:DesignHeight="1000" d:DesignWidth="1400" Background="#0F1219">
+             d:DesignHeight="800" d:DesignWidth="1200" Background="#F5F5F5">
 
     <UserControl.Resources>
-        <!-- Card Style -->
+        <!-- Battery Status to Border Color Converter -->
+        <Style x:Key="BatteryCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#4CAF50"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:BatteryStatus.Warning}">
+                    <Setter Property="BorderBrush" Value="#F44336"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:BatteryStatus.Inactive}">
+                    <Setter Property="Background" Value="#E0E0E0"/>
+                    <Setter Property="BorderBrush" Value="#9E9E9E"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="BorderBrush" Value="#2196F3"/>
+                    <Setter Property="BorderThickness" Value="3"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FAFAFA"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Existing Card Style (dark theme - kept for reference) -->
         <Style x:Key="EVCardStyle" TargetType="Border">
             <Setter Property="Background" Value="#1C212D"/>
             <Setter Property="CornerRadius" Value="8"/>
@@ -28,77 +57,110 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Light Card Style -->
+        <Style x:Key="LightCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        </Style>
+
         <!-- Command Button Style -->
         <Style x:Key="CommandButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="#333"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" 
+                                Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Step Item Style -->
+        <Style x:Key="StepItemBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StepStatus.Completed}">
+                    <Setter Property="BorderBrush" Value="#4CAF50"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StepStatus.Active}">
+                    <Setter Property="BorderBrush" Value="#4CAF50"/>
+                    <Setter Property="Background" Value="#E8F5E9"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
-    <Grid>
-        <Grid Margin="20">
+    <Grid Margin="10">
+        <!-- Main Content (removed sidebar) -->
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/> <!-- Top Bar -->
                 <RowDefinition Height="Auto"/> <!-- Battery Grid -->
-                <RowDefinition Height="*"/>    <!-- Overview & Stats -->
+                <RowDefinition Height="Auto"/> <!-- Progress Bar -->
+                <RowDefinition Height="*"/>    <!-- Bottom Section -->
             </Grid.RowDefinitions>
 
             <!-- Top Bar Controls -->
-            <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid Grid.Row="0" Margin="0,0,0,10">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
-                    <Border Background="#1C212D" CornerRadius="4" Padding="5">
-                        <StackPanel Orientation="Horizontal">
-                            <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding StartCommand}">
-                                <StackPanel Orientation="Horizontal" Margin="5,0">
-                                    <Border Background="#4A2B2B" CornerRadius="4" Width="20" Height="20" Margin="0,0,8,0">
-                                         <Rectangle Width="8" Height="8" Fill="#C94C4C"/>
-                                    </Border>
-                                    <TextBlock Text="START" Foreground="White" VerticalAlignment="Center" FontWeight="Bold"/>
-                                </StackPanel>
-                            </Button>
-                            
-                            <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding StopCommand}">
-                                <StackPanel Orientation="Horizontal" Margin="5,0">
-                                    <Ellipse Width="10" Height="10" Fill="#C94C4C" Margin="0,0,8,0"/>
-                                    <TextBlock Text="STOP" Foreground="White" VerticalAlignment="Center" FontWeight="Bold"/>
-                                </StackPanel>
-                            </Button>
-
-                            <Button Style="{StaticResource CommandButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Margin="5,0">
-                                    <Ellipse Width="10" Height="10" Fill="#3D866E" Margin="0,0,8,0"/>
-                                    <TextBlock Text="EMERGENCY STOP" Foreground="White" VerticalAlignment="Center" FontWeight="Bold"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Border>
+                    <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding StartCommand}" Margin="0,0,5,0">
+                        <TextBlock Text="Start" FontWeight="SemiBold"/>
+                    </Button>
                     
-                    <TextBlock Text="{Binding StatusDescription}" Foreground="#4FD1C5" FontWeight="Bold" Margin="30,0,0,0" VerticalAlignment="Center" FontSize="14"/>
+                    <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding StopCommand}" Margin="0,0,5,0">
+                        <TextBlock Text="Stop" FontWeight="SemiBold"/>
+                    </Button>
+
+                    <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding PauseResumeCommand}">
+                        <TextBlock Text="{Binding PauseResumeText}" FontWeight="SemiBold"/>
+                    </Button>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Border Background="#1C212D" Padding="10" CornerRadius="6" Margin="0,0,10,0">
-                         <Path Data="M20,6h-8l-2-2H4C2.9,4,2,4.9,2,6v12c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V8C22,6.9,21.1,6,20,6z" Fill="#9CA3AF" Width="20" Height="20"/>
+                    <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" Padding="8,5" CornerRadius="4" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                     BorderThickness="0" Background="Transparent" Width="100"
+                                     VerticalAlignment="Center" Foreground="#666"/>
+                            <TextBlock Text="??" Foreground="#999" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                        </StackPanel>
                     </Border>
-                    <Border Background="#1C212D" Padding="10" CornerRadius="6">
-                         <Path Data="M4,11h5V5H4V11z M4,19h5v-6H4V19z M11,19h5v-6h-5V19z M11,11h5V5h-5V11z M17,11h5V5h-5V11z M17,19h5v-6h-5V19z" Fill="#9CA3AF" Width="20" Height="20"/>
-                    </Border>
+                    <Button Style="{StaticResource CommandButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="??" Margin="0,0,5,0"/>
+                            <TextBlock Text="Filter" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
 
             <!-- Battery Grid -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="550" Margin="0,0,0,10">
+            <Border Grid.Row="1" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,10">
                 <ItemsControl ItemsSource="{Binding Batteries}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -107,7 +169,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Style="{StaticResource EVCardStyle}">
+                            <Border Style="{StaticResource BatteryCardStyle}">
                                 <Border.InputBindings>
                                     <MouseBinding MouseAction="LeftClick" 
                                                   Command="{Binding DataContext.SelectBatteryCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl}}" 
@@ -117,140 +179,286 @@
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Text="{Binding Name}" Foreground="White" FontWeight="Bold" FontSize="12"/>
-                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,5,0,5">
-                                        <TextBlock Text="{Binding Voltage, StringFormat={}{0:F2} V}" Foreground="#9CA3AF" FontSize="11" Margin="0,0,10,0"/>
-                                        <Path Data="M7,14L12,9L17,14H7Z" Fill="#3D866E" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                        <TextBlock Text="{Binding PassCount}" Foreground="#3D866E" FontSize="11" FontWeight="Bold"/>
+                                    <TextBlock Grid.Row="0" Text="{Binding Name}" Foreground="#333" FontWeight="Bold" FontSize="11"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Voltage, StringFormat={}{0:F0}V}" Foreground="#1976D2" FontWeight="Bold" FontSize="18" Margin="0,2,0,0"/>
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,2">
+                                        <TextBlock Text="{Binding Current, StringFormat={}{0:F0}A}" Foreground="#666" FontSize="10" Margin="0,0,10,0"/>
+                                        <TextBlock Text="{Binding Temperature, StringFormat={}{0:F0}oC}" Foreground="#666" FontSize="10"/>
                                     </StackPanel>
-                                    <lvc:CartesianChart Grid.Row="2" Height="30" DisableAnimations="True" Hoverable="False" DataTooltip="{x:Null}">
+                                    <!-- LiveCharts sparkline for battery card -->
+                                    <lvc:CartesianChart Grid.Row="3" Height="25" DisableAnimations="True" Hoverable="False" DataTooltip="{x:Null}">
                                         <lvc:CartesianChart.Series>
                                             <lvc:LineSeries Values="{Binding HistoryData}" 
-                                                            StrokeThickness="1.2"
-                                                            Stroke="#3D866E"
+                                                            StrokeThickness="1.5"
+                                                            Stroke="#4CAF50"
                                                             Fill="Transparent"
-                                                            PointGeometry="{x:Null}"/>
+                                                            PointGeometry="{x:Null}"
+                                                            LineSmoothness="0.5"/>
                                         </lvc:CartesianChart.Series>
-                                        <lvc:CartesianChart.AxisX><lvc:Axis ShowLabels="False" /></lvc:CartesianChart.AxisX>
-                                        <lvc:CartesianChart.AxisY><lvc:Axis ShowLabels="False" /></lvc:CartesianChart.AxisY>
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis ShowLabels="False" MinValue="0">
+                                                <lvc:Axis.Separator>
+                                                    <lvc:Separator IsEnabled="False"/>
+                                                </lvc:Axis.Separator>
+                                            </lvc:Axis>
+                                        </lvc:CartesianChart.AxisX>
+                                        <lvc:CartesianChart.AxisY>
+                                            <lvc:Axis ShowLabels="False" MinValue="0">
+                                                <lvc:Axis.Separator>
+                                                    <lvc:Separator IsEnabled="False"/>
+                                                </lvc:Axis.Separator>
+                                            </lvc:Axis>
+                                        </lvc:CartesianChart.AxisY>
                                     </lvc:CartesianChart>
                                 </Grid>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </ScrollViewer>
+            </Border>
+
+            <!-- Progress Bar -->
+            <Border Grid.Row="2" Height="15" CornerRadius="3" Margin="0,0,0,10" ClipToBounds="True">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Background="#4CAF50"/>
+                    <Border Grid.Column="1" Background="#FFC107"/>
+                    <Border Grid.Column="2" Background="#2196F3"/>
+                    <Border Grid.Column="3" Background="#9C27B0"/>
+                    <Border Grid.Column="4" Background="#F44336"/>
+                    <Border Grid.Column="5" Background="#00BCD4"/>
+                    <Border Grid.Column="6" Background="#FF9800"/>
+                    <Border Grid.Column="7" Background="#607D8B"/>
+                </Grid>
+            </Border>
 
             <!-- Bottom Content -->
-            <Grid Grid.Row="2">
+            <Grid Grid.Row="3">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2.2*"/>
+                    <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Grid Grid.Column="0">
+                <!-- Left Section -->
+                <Grid Grid.Column="0" Margin="0,0,10,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Style="{StaticResource EVCardStyle}">
+                    <!-- Main Chart -->
+                    <Border Grid.Row="0" Style="{StaticResource LightCardStyle}" Margin="0,0,0,10">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock Text="Detailed Analysis - " Foreground="White" FontWeight="Bold" FontSize="14"/>
-                                <TextBlock Text="{Binding SelectedBatteryName}" Foreground="#4FD1C5" FontWeight="Bold" FontSize="14"/>
-                            </StackPanel>
-                            <lvc:CartesianChart Grid.Row="1" Series="{Binding OverviewSeries}" LegendLocation="None">
+                            <TextBlock Grid.Row="0" Text="{Binding SelectedBatteryName}" Foreground="#333" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+                            <lvc:CartesianChart Grid.Row="1" Series="{Binding OverviewSeries}" LegendLocation="None" MinHeight="200" DisableAnimations="True" Hoverable="False" DataTooltip="{x:Null}">
                                 <lvc:CartesianChart.AxisX>
-                                    <lvc:Axis Title="Time" Labels="{Binding OverviewLabels}" Foreground="#444">
-                                        <lvc:Axis.Separator><lvc:Separator Stroke="#222" IsEnabled="True" /></lvc:Axis.Separator>
+                                    <lvc:Axis Title="Time (s)" Foreground="#666" FontSize="10" ShowLabels="True" MinValue="0">
+                                        <lvc:Axis.Separator>
+                                            <lvc:Separator IsEnabled="True" StrokeThickness="0.5">
+                                                <lvc:Separator.Stroke>
+                                                    <SolidColorBrush Color="#EEEEEE"/>
+                                                </lvc:Separator.Stroke>
+                                            </lvc:Separator>
+                                        </lvc:Axis.Separator>
                                     </lvc:Axis>
                                 </lvc:CartesianChart.AxisX>
                                 <lvc:CartesianChart.AxisY>
-                                    <lvc:Axis Foreground="#444">
-                                        <lvc:Axis.Separator><lvc:Separator Stroke="#222" IsEnabled="True" /></lvc:Axis.Separator>
+                                    <lvc:Axis Title="Voltage (V)" Foreground="#2196F3" ShowLabels="True" MinValue="0">
+                                        <lvc:Axis.Separator>
+                                            <lvc:Separator IsEnabled="True" StrokeThickness="0.5">
+                                                <lvc:Separator.Stroke>
+                                                    <SolidColorBrush Color="#EEEEEE"/>
+                                                </lvc:Separator.Stroke>
+                                            </lvc:Separator>
+                                        </lvc:Axis.Separator>
                                     </lvc:Axis>
                                 </lvc:CartesianChart.AxisY>
                             </lvc:CartesianChart>
                         </Grid>
                     </Border>
 
-                    <Border Grid.Row="1" Style="{StaticResource EVCardStyle}">
-                        <StackPanel>
-                            <TextBlock Text="Thread Allocation Table" Foreground="White" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
-                            <DataGrid ItemsSource="{Binding Steps}" AutoGenerateColumns="False" 
-                                      Background="Transparent" BorderThickness="0" RowBackground="Transparent" 
-                                      VerticalGridLinesBrush="#222" HorizontalGridLinesBrush="#222"
-                                      Foreground="#9CA3AF" HeadersVisibility="Column" IsReadOnly="True">
-                                <DataGrid.Resources>
-                                    <Style TargetType="DataGridColumnHeader">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#666"/>
-                                        <Setter Property="Padding" Value="10,5"/>
-                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                        <Setter Property="BorderBrush" Value="#222"/>
-                                    </Style>
-                                </DataGrid.Resources>
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Operation" Binding="{Binding Step}" Width="150"/>
-                                    <DataGridTextColumn Header="Service Handle / IPC Endpoint" Binding="{Binding Description}" Width="*"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </StackPanel>
-                    </Border>
+                    <!-- Bottom Row: System Logs & Stats -->
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- System Logs -->
+                        <Border Grid.Column="0" Style="{StaticResource LightCardStyle}" Margin="0,0,10,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Foreground="#333" FontWeight="Bold" FontSize="14" Margin="0,0,0,10">
+                                    <Run Text="System logs"/>
+                                    <Run Text=" - "/>
+                                    <Run Text="{Binding SelectedBatteryName, Mode=OneWay}"/>
+                                </TextBlock>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="120">
+                                    <ItemsControl ItemsSource="{Binding LogEntries}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="0,2">
+                                                    <TextBlock Text="{Binding Timestamp}" Foreground="#999" FontSize="11" Margin="0,0,5,0"/>
+                                                    <TextBlock Text="{Binding Message}" FontSize="11">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#2196F3"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Level}" Value="{x:Static enums:LogLevel.Error}">
+                                                                        <Setter Property="Foreground" Value="#F44336"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Level}" Value="{x:Static enums:LogLevel.Warning}">
+                                                                        <Setter Property="Foreground" Value="#FF9800"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+
+                        <!-- Stats -->
+                        <Border Grid.Column="1" Style="{StaticResource LightCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Stats" Foreground="#333" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+                                <StackPanel Margin="0,5">
+                                    <TextBlock Foreground="#666" FontSize="11">
+                                        <Run Text="Pattern name: "/>
+                                        <Run Text="{Binding PatternName}" FontWeight="SemiBold"/>
+                                    </TextBlock>
+                                    <TextBlock Foreground="#666" FontSize="11" Margin="0,5,0,0">
+                                        <Run Text="Elapsed: "/>
+                                        <Run Text="{Binding PatternElapsedTime}" FontWeight="SemiBold"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
 
+                <!-- Right Section -->
                 <Grid Grid.Column="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Style="{StaticResource EVCardStyle}" Height="200">
-                        <UniformGrid Columns="2">
-                            <Grid Margin="10">
-                                <Path Data="M50,10 A40,40 0 1,1 10,50" Stroke="#10B981" StrokeThickness="6" StrokeEndLineCap="Round" 
-                                      Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="Selected Battery SOC"/>
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                    <TextBlock Text="SOC" FontSize="8" Foreground="#9CA3AF" TextAlignment="Center"/>
-                                    <TextBlock Text="{Binding SelectedBattery.StateOfCharge, StringFormat={}{0}%}" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
-                            
-                            <Grid Margin="10">
-                                <Ellipse Width="70" Height="70" Stroke="#252B3A" StrokeThickness="6"/>
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                    <TextBlock Text="{Binding SelectedBattery.Voltage, StringFormat={}{0:F2}}" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Volts" FontSize="10" Foreground="#9CA3AF" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
-                        </UniformGrid>
+                    <!-- Measurement Values -->
+                    <Border Grid.Row="0" Style="{StaticResource LightCardStyle}" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Measurement Value" Foreground="#333" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+                            <UniformGrid Grid.Row="1" Columns="2" Rows="3">
+                                <Border BorderBrush="#E0E0E0" BorderThickness="1" Margin="2" Padding="10,8" CornerRadius="4">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Voltage" Foreground="#666" FontSize="10" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedBattery.Voltage, StringFormat={}{0:F1} V}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border BorderBrush="#E0E0E0" BorderThickness="1" Margin="2" Padding="10,8" CornerRadius="4">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Current" Foreground="#666" FontSize="10" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedBattery.Current, StringFormat={}{0:F1} A}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border BorderBrush="#E0E0E0" BorderThickness="1" Margin="2" Padding="10,8" CornerRadius="4">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Temperature" Foreground="#666" FontSize="10" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedBattery.Temperature, StringFormat={}{0:F1} V}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border BorderBrush="#E0E0E0" BorderThickness="1" Margin="2" Padding="10,8" CornerRadius="4">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Ampere Hour" Foreground="#666" FontSize="10" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedBattery.Voltage, StringFormat={}{0:F1} V}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border BorderBrush="#E0E0E0" BorderThickness="1" Margin="2" Padding="10,8" CornerRadius="4">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Capacity" Foreground="#666" FontSize="10" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedBattery.Voltage, StringFormat={}{0:F1} V}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border BorderBrush="#E0E0E0" BorderThickness="1" Margin="2" Padding="10,8" CornerRadius="4">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Voltage" Foreground="#666" FontSize="10" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedBattery.Voltage, StringFormat={}{0:F1} V}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                        </Grid>
                     </Border>
 
-                    <Border Grid.Row="1" Style="{StaticResource EVCardStyle}">
-                        <StackPanel>
-                            <TextBlock Text="Active IPC Nodes" Foreground="White" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
-                            <ItemsControl ItemsSource="{Binding Steps}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,4">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Ellipse Width="8" Height="8" Fill="#10B981" Margin="0,0,10,0"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding Step}" Foreground="#9CA3AF" FontSize="12"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
+                    <!-- Step Table -->
+                    <Border Grid.Row="1" Style="{StaticResource LightCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Step Table" Foreground="#333" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Grid.Row="1" Foreground="#666" FontSize="11" Margin="0,5,0,10">
+                                <Run Text="Elapsed: "/>
+                                <Run Text="{Binding ElapsedTime}" FontWeight="SemiBold"/>
+                            </TextBlock>
+                            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Steps}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource StepItemBorderStyle}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{Binding Step}" Foreground="#333" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="?" Foreground="#4CAF50" FontSize="14" FontWeight="Bold" VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StepStatus.Completed}">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
                     </Border>
                 </Grid>
             </Grid>

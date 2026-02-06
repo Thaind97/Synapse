@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using LiveCharts;
+using Synapse.Shared.Enums;
 
 namespace Synapse.Presentation.Models
 {
@@ -7,10 +8,14 @@ namespace Synapse.Presentation.Models
     {
         private string _name = string.Empty;
         private double _voltage;
+        private double _current = 5.0;
+        private double _temperature = 20.0;
         private int _stateOfCharge;
         private int _passCount;
         private bool _isSelected;
+        private BatteryStatus _status = BatteryStatus.Normal;
         private ChartValues<double> _historyData = new();
+        private ChartValues<double> _currentHistoryData = new();
 
         public string Name
         {
@@ -22,6 +27,18 @@ namespace Synapse.Presentation.Models
         {
             get => _voltage;
             set => SetProperty(ref _voltage, value);
+        }
+
+        public double Current
+        {
+            get => _current;
+            set => SetProperty(ref _current, value);
+        }
+
+        public double Temperature
+        {
+            get => _temperature;
+            set => SetProperty(ref _temperature, value);
         }
 
         public int StateOfCharge
@@ -42,10 +59,22 @@ namespace Synapse.Presentation.Models
             set => SetProperty(ref _isSelected, value);
         }
 
+        public BatteryStatus Status
+        {
+            get => _status;
+            set => SetProperty(ref _status, value);
+        }
+
         public ChartValues<double> HistoryData
         {
             get => _historyData;
             set => SetProperty(ref _historyData, value);
+        }
+
+        public ChartValues<double> CurrentHistoryData
+        {
+            get => _currentHistoryData;
+            set => SetProperty(ref _currentHistoryData, value);
         }
     }
 }
