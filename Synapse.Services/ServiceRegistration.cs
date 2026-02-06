@@ -55,6 +55,7 @@ namespace Synapse.Services
             // Register Business Services
             services.AddTransient<IUserService, UserService>();
             services.AddSingleton<IDashboardService, MockDashboardService>();
+            services.AddSingleton<IEVControlService, EVControlService>();
             services.AddScoped<ITaskService, TaskService>();
             services.AddTransient<ISequenceService, SequenceService>();
             services.AddSingleton<ISequenceRunner, SequenceRunner>();

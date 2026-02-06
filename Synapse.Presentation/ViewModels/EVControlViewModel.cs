@@ -11,7 +11,10 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Synapse.Presentation.Models;
 using Synapse.Presentation.Services;
+using Synapse.Services;
+using Synapse.Services.Models;
 using Synapse.Shared.Enums;
+using Synapse.Shared.Helper;
 
 namespace Synapse.Presentation.ViewModels
 {
@@ -22,6 +25,7 @@ namespace Synapse.Presentation.ViewModels
         private CancellationTokenSource? _cts;
         private BatteryInfo? _selectedBattery;
         private readonly IpcManager _ipcManager;
+        private readonly IEVControlService? _evControlService;
         private Timer? _uiUpdateTimer;
         private Timer? _elapsedTimer;
         private DateTime _startTime;
@@ -30,6 +34,7 @@ namespace Synapse.Presentation.ViewModels
         private string _patternElapsedTime = "00:00:00";
         private string _patternName = "CC Charge";
         private int _currentStepIndex = 0;
+        private bool _useRealData = true;
 
         public ObservableCollection<BatteryInfo> Batteries { get; set; } = new();
         public ObservableCollection<StepItem> Steps { get; set; } = new();
@@ -99,7 +104,7 @@ namespace Synapse.Presentation.ViewModels
             set => SetProperty(ref _currentStepIndex, value);
         }
 
-        public string StatusDescription => IsRunning ? "SYSTEM RUNNING - REALTIME IPC (SHARED MEMORY)" : "SYSTEM IDLE";
+        public string StatusDescription => IsRunning ? "SYSTEM RUNNING - REALTIME DATA" : "SYSTEM IDLE";
 
         public BatteryInfo? SelectedBattery
         {
@@ -122,15 +127,116 @@ namespace Synapse.Presentation.ViewModels
         {
             _ipcManager = new IpcManager();
             
+            // Try to resolve service from DI container
+            _evControlService = ServiceHelper.GetService<IEVControlService>();
+            _useRealData = _evControlService != null;
+            
             StartCommand = new RelayCommand(StartRealtime);
             StopCommand = new RelayCommand(StopRealtime);
             PauseResumeCommand = new RelayCommand(TogglePauseResume);
             SelectBatteryCommand = new RelayCommand<BatteryInfo>(battery => SelectedBattery = battery);
 
-            InitializeView();
+            // Initialize asynchronously
+            _ = InitializeViewAsync();
         }
 
-        private void InitializeView()
+        public EVControlViewModel(IEVControlService evControlService)
+        {
+            _ipcManager = new IpcManager();
+            _evControlService = evControlService;
+            _useRealData = true;
+            
+            StartCommand = new RelayCommand(StartRealtime);
+            StopCommand = new RelayCommand(StopRealtime);
+            PauseResumeCommand = new RelayCommand(TogglePauseResume);
+            SelectBatteryCommand = new RelayCommand<BatteryInfo>(battery => SelectedBattery = battery);
+
+            // Initialize asynchronously
+            _ = InitializeViewAsync();
+        }
+
+        private async Task InitializeViewAsync()
+        {
+            if (_useRealData && _evControlService != null)
+            {
+                await LoadDataFromServiceAsync();
+            }
+            else
+            {
+                InitializeWithMockData();
+            }
+        }
+
+        private async Task LoadDataFromServiceAsync()
+        {
+            try
+            {
+                var data = await _evControlService!.GetInitialDataAsync();
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    // Load batteries
+                    Batteries.Clear();
+                    foreach (var batteryData in data.Batteries)
+                    {
+                        var historyData = new ChartValues<double>(batteryData.VoltageHistory);
+                        var currentHistoryData = new ChartValues<double>(batteryData.CurrentHistory);
+
+                        Batteries.Add(new BatteryInfo
+                        {
+                            Name = batteryData.Name,
+                            Voltage = batteryData.Voltage,
+                            Current = batteryData.Current,
+                            Temperature = batteryData.Temperature,
+                            StateOfCharge = batteryData.StateOfCharge,
+                            PassCount = batteryData.PassCount,
+                            Status = batteryData.Status,
+                            HistoryData = historyData,
+                            CurrentHistoryData = currentHistoryData
+                        });
+                    }
+
+                    SelectedBattery = Batteries.FirstOrDefault();
+
+                    // Load steps
+                    Steps.Clear();
+                    foreach (var stepData in data.Steps)
+                    {
+                        Steps.Add(new StepItem
+                        {
+                            Step = stepData.Step,
+                            Description = stepData.Description,
+                            Status = stepData.Status
+                        });
+                    }
+
+                    // Load log entries
+                    LogEntries.Clear();
+                    foreach (var logData in data.LogEntries)
+                    {
+                        LogEntries.Add(new LogEntry
+                        {
+                            Timestamp = logData.Timestamp,
+                            Message = logData.Message,
+                            Level = logData.Level
+                        });
+                    }
+
+                    PatternName = data.PatternName;
+                    OverviewLabels = Enumerable.Range(0, 65).Where(x => x % 5 == 0).Select(i => i.ToString()).ToArray();
+
+                    InitializeOverviewChart();
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading data from service: {ex.Message}");
+                // Fallback to mock data
+                InitializeWithMockData();
+            }
+        }
+
+        private void InitializeWithMockData()
         {
             // Initialize 16 batteries (matching screenshot)
             for (int i = 1; i <= 16; i++)
@@ -249,6 +355,12 @@ namespace Synapse.Presentation.ViewModels
             {
                 AddLogEntry("INFO: System resumed", LogLevel.Info);
             }
+
+            // Notify service if available
+            if (_evControlService != null)
+            {
+                _ = _evControlService.TogglePauseAsync();
+            }
         }
 
         private void AddLogEntry(string message, LogLevel level)
@@ -260,7 +372,7 @@ namespace Synapse.Presentation.ViewModels
             });
         }
 
-        private void StartRealtime()
+        private async void StartRealtime()
         {
             if (IsRunning) return;
 
@@ -273,23 +385,35 @@ namespace Synapse.Presentation.ViewModels
             AddLogEntry("INFO: Experiment started", LogLevel.Info);
             AddLogEntry($"INFO: Pattern \"{PatternName}\" started", LogLevel.Info);
 
+            // Notify service if available
+            if (_evControlService != null)
+            {
+                await _evControlService.StartExperimentAsync(PatternName);
+            }
+
             // Update step status
             if (Steps.Count > 0)
             {
                 Steps[0].Status = StepStatus.Active;
             }
 
-            // 1. Start 16 "Service Threads" that write to Shared Memory
-            for (int i = 0; i < Batteries.Count; i++)
+            if (_useRealData && _evControlService != null)
             {
-                int threadIndex = i;
-                Task.Run(() => RunExternalServiceSimulation(threadIndex, token), token);
+                // Start real-time data polling from service
+                _uiUpdateTimer = new Timer(UpdateUiFromService, null, 100, 100);
+            }
+            else
+            {
+                // Start simulation threads for mock data
+                for (int i = 0; i < Batteries.Count; i++)
+                {
+                    int threadIndex = i;
+                    Task.Run(() => RunExternalServiceSimulation(threadIndex, token), token);
+                }
+                _uiUpdateTimer = new Timer(UpdateUiFromSharedMemory, null, 100, 100);
             }
 
-            // 2. Start UI Refresh Timer (Reading from Shared Memory)
-            _uiUpdateTimer = new Timer(UpdateUiFromSharedMemory, null, 100, 100);
-
-            // 3. Start Elapsed Time Timer
+            // Start Elapsed Time Timer
             _elapsedTimer = new Timer(UpdateElapsedTime, null, 1000, 1000);
         }
 
@@ -303,7 +427,7 @@ namespace Synapse.Presentation.ViewModels
             });
         }
 
-        private void StopRealtime()
+        private async void StopRealtime()
         {
             if (!IsRunning) return;
 
@@ -315,11 +439,56 @@ namespace Synapse.Presentation.ViewModels
             IsRunning = false;
             IsPaused = false;
 
+            // Notify service if available
+            if (_evControlService != null)
+            {
+                await _evControlService.StopExperimentAsync();
+            }
+
             AddLogEntry("INFO: Experiment stopped", LogLevel.Info);
         }
 
         /// <summary>
-        /// Simulates an external process or service writing to Shared Memory
+        /// Updates UI from the EV Control service (real data)
+        /// </summary>
+        private async void UpdateUiFromService(object? state)
+        {
+            if (!IsRunning || IsPaused || _evControlService == null) return;
+
+            try
+            {
+                var batteryDataList = await _evControlService.GetBatteryDataAsync();
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    for (int i = 0; i < Math.Min(Batteries.Count, batteryDataList.Count); i++)
+                    {
+                        var data = batteryDataList[i];
+                        var battery = Batteries[i];
+
+                        battery.Voltage = data.Voltage;
+                        battery.Current = data.Current;
+                        battery.Temperature = data.Temperature;
+                        battery.StateOfCharge = data.StateOfCharge;
+                        battery.PassCount = data.PassCount;
+
+                        // Update History for individual charts
+                        battery.HistoryData.Add(data.Voltage);
+                        if (battery.HistoryData.Count > 65) battery.HistoryData.RemoveAt(0);
+
+                        battery.CurrentHistoryData.Add(data.Current);
+                        if (battery.CurrentHistoryData.Count > 65) battery.CurrentHistoryData.RemoveAt(0);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating from service: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Simulates an external process or service writing to Shared Memory (fallback)
         /// </summary>
         private async Task RunExternalServiceSimulation(int index, CancellationToken token)
         {
@@ -354,7 +523,7 @@ namespace Synapse.Presentation.ViewModels
         }
 
         /// <summary>
-        /// Periodic task to READ from Shared Memory and update UI
+        /// Periodic task to READ from Shared Memory and update UI (fallback)
         /// </summary>
         private void UpdateUiFromSharedMemory(object? state)
         {
