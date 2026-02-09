@@ -56,6 +56,8 @@ namespace Synapse.Services
                     Temperature = 20.0,
                     StateOfCharge = 70 + (i % 20),
                     PassCount = 0,
+                    AmpereHour = 5.6,
+                    Capacity = 5.6,
                     Status = status,
                     VoltageHistory = voltageHistory,
                     CurrentHistory = currentHistory
@@ -106,7 +108,9 @@ namespace Synapse.Services
                     Current = 0.3 + (_random.NextDouble() * 1.2),
                     Temperature = 20.0 + (_random.NextDouble() * 5.0),
                     StateOfCharge = 70 + _random.Next(-5, 6),
-                    PassCount = _random.Next(0, 10)
+                    PassCount = _random.Next(0, 10),
+                    AmpereHour = 5.0 + (_random.NextDouble() * 1.0),
+                    Capacity = 5.0 + (_random.NextDouble() * 1.0)
                 });
             }
 
@@ -128,7 +132,9 @@ namespace Synapse.Services
                 Current = 0.3 + (_random.NextDouble() * 1.2),
                 Temperature = 20.0 + (_random.NextDouble() * 5.0),
                 StateOfCharge = 70 + _random.Next(-5, 6),
-                PassCount = _random.Next(0, 10)
+                PassCount = _random.Next(0, 10),
+                AmpereHour = 5.0 + (_random.NextDouble() * 1.0),
+                Capacity = 5.0 + (_random.NextDouble() * 1.0)
             };
         }
 

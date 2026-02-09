@@ -10,49 +10,31 @@
              d:DesignHeight="800" d:DesignWidth="1200" Background="#F5F5F5">
 
     <UserControl.Resources>
-        <!-- Battery Status to Border Color Converter -->
-        <Style x:Key="BatteryCardStyle" TargetType="Border">
+        <!-- Battery/Channel Status Card Style -->
+        <Style x:Key="ChannelCardStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Margin" Value="4"/>
-            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Padding" Value="8,6"/>
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="BorderBrush" Value="#4CAF50"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinHeight" Value="80"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:BatteryStatus.Warning}">
                     <Setter Property="BorderBrush" Value="#F44336"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:BatteryStatus.Inactive}">
-                    <Setter Property="Background" Value="#E0E0E0"/>
-                    <Setter Property="BorderBrush" Value="#9E9E9E"/>
+                    <Setter Property="Background" Value="#F5F5F5"/>
+                    <Setter Property="BorderBrush" Value="#E0E0E0"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                     <Setter Property="BorderBrush" Value="#2196F3"/>
                     <Setter Property="BorderThickness" Value="3"/>
+                    <Setter Property="Background" Value="#E3F2FD"/>
                 </DataTrigger>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#FAFAFA"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- Existing Card Style (dark theme - kept for reference) -->
-        <Style x:Key="EVCardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1C212D"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Margin" Value="4"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter Property="BorderBrush" Value="#4FD1C5"/>
-                    <Setter Property="Background" Value="#252B3A"/>
-                </DataTrigger>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#252B3B"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -70,29 +52,38 @@
         <!-- Command Button Style -->
         <Style x:Key="CommandButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="#BDBDBD"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="MinWidth" Value="70"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}" 
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4" 
+                                CornerRadius="3" 
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#F5F5F5"/>
+                                <Setter Property="Background" Value="#F0F0F0"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#E0E0E0"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- Filter Button Style -->
+        <Style x:Key="FilterButtonStyle" TargetType="Button" BasedOn="{StaticResource CommandButtonStyle}">
+            <Setter Property="Padding" Value="10,6"/>
         </Style>
 
         <!-- Step Item Style -->
@@ -113,55 +104,112 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Search TextBox Style -->
+        <Style x:Key="SearchTextBoxStyle" TargetType="TextBox">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="CaretBrush" Value="#333"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="10">
-        <!-- Main Content (removed sidebar) -->
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- Top Bar -->
-                <RowDefinition Height="Auto"/> <!-- Battery Grid -->
+                <RowDefinition Height="Auto"/> <!-- Top Bar: Controls + Search -->
+                <RowDefinition Height="Auto"/> <!-- Channel Status Panel -->
                 <RowDefinition Height="Auto"/> <!-- Progress Bar -->
                 <RowDefinition Height="*"/>    <!-- Bottom Section -->
             </Grid.RowDefinitions>
 
-            <!-- Top Bar Controls -->
-            <Grid Grid.Row="0" Margin="0,0,0,10">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
-                    <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding StartCommand}" Margin="0,0,5,0">
-                        <TextBlock Text="Start" FontWeight="SemiBold"/>
-                    </Button>
-                    
-                    <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding StopCommand}" Margin="0,0,5,0">
-                        <TextBlock Text="Stop" FontWeight="SemiBold"/>
-                    </Button>
+            <!-- Top Bar: Start/Stop/Pause + Search/Filter -->
+            <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding PauseResumeCommand}">
-                        <TextBlock Text="{Binding PauseResumeText}" FontWeight="SemiBold"/>
-                    </Button>
-                </StackPanel>
+                    <!-- Left: Control Buttons -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding StartCommand}" Margin="0,0,5,0">
+                            <TextBlock Text="Start" FontWeight="SemiBold" FontSize="12"/>
+                        </Button>
+                        
+                        <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding StopCommand}" Margin="0,0,5,0">
+                            <TextBlock Text="Stop" FontWeight="SemiBold" FontSize="12"/>
+                        </Button>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" Padding="8,5" CornerRadius="4" Margin="0,0,10,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
-                                     BorderThickness="0" Background="Transparent" Width="100"
-                                     VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBlock Text="??" Foreground="#999" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                        </StackPanel>
-                    </Border>
-                    <Button Style="{StaticResource CommandButtonStyle}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="??" Margin="0,0,5,0"/>
-                            <TextBlock Text="Filter" FontWeight="SemiBold"/>
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
-            </Grid>
+                        <Button Style="{StaticResource CommandButtonStyle}" Command="{Binding PauseResumeCommand}">
+                            <TextBlock Text="{Binding PauseResumeText}" FontWeight="SemiBold" FontSize="12"/>
+                        </Button>
+                    </StackPanel>
 
-            <!-- Battery Grid -->
-            <Border Grid.Row="1" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,10">
-                <ItemsControl ItemsSource="{Binding Batteries}">
+                    <!-- Right: Search Box + Filter -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <!-- Search Box -->
+                        <Border Background="White" BorderBrush="#BDBDBD" BorderThickness="1" CornerRadius="3" Margin="0,0,8,0" MinWidth="150">
+                            <Grid Margin="8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBox Grid.Column="0" 
+                                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource SearchTextBoxStyle}"
+                                         Width="100"
+                                         x:Name="SearchTextBox"/>
+                                
+                                <!-- Placeholder text -->
+                                <TextBlock Grid.Column="0" 
+                                           Text="Search" 
+                                           Foreground="#999" 
+                                           VerticalAlignment="Center"
+                                           IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text, ElementName=SearchTextBox}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                
+                                <!-- Search Icon -->
+                                <Path Grid.Column="1" 
+                                      Data="M10.5,0 C16.299,0 21,4.701 21,10.5 C21,13.052 20.073,15.391 18.527,17.182 L24,22.656 L22.656,24 L17.182,18.527 C15.391,20.073 13.052,21 10.5,21 C4.701,21 0,16.299 0,10.5 C0,4.701 4.701,0 10.5,0 Z M10.5,2 C5.806,2 2,5.806 2,10.5 C2,15.194 5.806,19 10.5,19 C15.194,19 19,15.194 19,10.5 C19,5.806 15.194,2 10.5,2 Z"
+                                      Fill="#999" 
+                                      Stretch="Uniform" 
+                                      Width="14" Height="14" 
+                                      Margin="5,0,0,0"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Filter Button -->
+                        <Button Style="{StaticResource FilterButtonStyle}" Command="{Binding FilterCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="M3,2 L21,2 L21,4 L3,4 Z M5,7 L19,7 L19,9 L5,9 Z M8,12 L16,12 L16,14 L8,14 Z"
+                                      Fill="#666" 
+                                      Stretch="Uniform" 
+                                      Width="14" Height="14" 
+                                      Margin="0,0,5,0"/>
+                                <TextBlock Text="Filter" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Channel Status Panel -->
+            <Border Grid.Row="1" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,10">
+                <ItemsControl ItemsSource="{Binding FilteredBatteries}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="8"/>
@@ -169,7 +217,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Style="{StaticResource BatteryCardStyle}">
+                            <Border Style="{StaticResource ChannelCardStyle}">
                                 <Border.InputBindings>
                                     <MouseBinding MouseAction="LeftClick" 
                                                   Command="{Binding DataContext.SelectBatteryCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl}}" 
@@ -182,21 +230,52 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Text="{Binding Name}" Foreground="#333" FontWeight="Bold" FontSize="11"/>
-                                    <TextBlock Grid.Row="1" Text="{Binding Voltage, StringFormat={}{0:F0}V}" Foreground="#1976D2" FontWeight="Bold" FontSize="18" Margin="0,2,0,0"/>
+                                    
+                                    <!-- Channel Name -->
+                                    <TextBlock Grid.Row="0" 
+                                               Text="{Binding Name}" 
+                                               Foreground="#333" 
+                                               FontWeight="SemiBold" 
+                                               FontSize="11"/>
+                                    
+                                    <!-- Voltage (Primary Value) -->
+                                    <TextBlock Grid.Row="1" 
+                                               Text="{Binding Voltage, StringFormat={}{0:F0}V}" 
+                                               Foreground="#333" 
+                                               FontWeight="Bold" 
+                                               FontSize="18" 
+                                               Margin="0,2,0,0"/>
+                                    
+                                    <!-- Current & Temperature -->
                                     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,2">
-                                        <TextBlock Text="{Binding Current, StringFormat={}{0:F0}A}" Foreground="#666" FontSize="10" Margin="0,0,10,0"/>
-                                        <TextBlock Text="{Binding Temperature, StringFormat={}{0:F0}oC}" Foreground="#666" FontSize="10"/>
+                                        <TextBlock Text="{Binding Current, StringFormat={}{0:F0}A}" 
+                                                   Foreground="#666" 
+                                                   FontSize="10" 
+                                                   Margin="0,0,8,0"/>
+                                        <TextBlock Foreground="#666" FontSize="10">
+                                            <Run Text="{Binding Temperature, StringFormat={}{0:F0}, Mode=OneWay}"/><Run Text="oC"/>
+                                        </TextBlock>
                                     </StackPanel>
-                                    <!-- LiveCharts sparkline for battery card -->
-                                    <lvc:CartesianChart Grid.Row="3" Height="25" DisableAnimations="True" Hoverable="False" DataTooltip="{x:Null}">
+                                    
+                                    <!-- Mini Trend Graph -->
+                                    <lvc:CartesianChart Grid.Row="3" 
+                                                        Height="25" 
+                                                        DisableAnimations="True" 
+                                                        Hoverable="False" 
+                                                        DataTooltip="{x:Null}"
+                                                        Margin="0,2,0,0">
                                         <lvc:CartesianChart.Series>
                                             <lvc:LineSeries Values="{Binding HistoryData}" 
                                                             StrokeThickness="1.5"
-                                                            Stroke="#4CAF50"
-                                                            Fill="Transparent"
                                                             PointGeometry="{x:Null}"
-                                                            LineSmoothness="0.5"/>
+                                                            LineSmoothness="0.3">
+                                                <lvc:LineSeries.Stroke>
+                                                    <SolidColorBrush Color="#4CAF50"/>
+                                                </lvc:LineSeries.Stroke>
+                                                <lvc:LineSeries.Fill>
+                                                    <SolidColorBrush Color="Transparent"/>
+                                                </lvc:LineSeries.Fill>
+                                            </lvc:LineSeries>
                                         </lvc:CartesianChart.Series>
                                         <lvc:CartesianChart.AxisX>
                                             <lvc:Axis ShowLabels="False" MinValue="0">
@@ -220,8 +299,8 @@
                 </ItemsControl>
             </Border>
 
-            <!-- Progress Bar -->
-            <Border Grid.Row="2" Height="15" CornerRadius="3" Margin="0,0,0,10" ClipToBounds="True">
+            <!-- Progress Bar (Status Indicator for all channels) -->
+            <Border Grid.Row="2" Height="12" CornerRadius="2" Margin="0,0,0,10" ClipToBounds="True" Background="#E0E0E0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -234,13 +313,13 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" Background="#4CAF50"/>
-                    <Border Grid.Column="1" Background="#FFC107"/>
-                    <Border Grid.Column="2" Background="#2196F3"/>
-                    <Border Grid.Column="3" Background="#9C27B0"/>
-                    <Border Grid.Column="4" Background="#F44336"/>
-                    <Border Grid.Column="5" Background="#00BCD4"/>
-                    <Border Grid.Column="6" Background="#FF9800"/>
-                    <Border Grid.Column="7" Background="#607D8B"/>
+                    <Border Grid.Column="1" Background="#8BC34A"/>
+                    <Border Grid.Column="2" Background="#4CAF50"/>
+                    <Border Grid.Column="3" Background="#F44336"/>
+                    <Border Grid.Column="4" Background="#E0E0E0"/>
+                    <Border Grid.Column="5" Background="#4CAF50"/>
+                    <Border Grid.Column="6" Background="#4CAF50"/>
+                    <Border Grid.Column="7" Background="#4CAF50"/>
                 </Grid>
             </Border>
 
@@ -279,13 +358,18 @@
                                     </lvc:Axis>
                                 </lvc:CartesianChart.AxisX>
                                 <lvc:CartesianChart.AxisY>
-                                    <lvc:Axis Title="Voltage (V)" Foreground="#2196F3" ShowLabels="True" MinValue="0">
+                                    <lvc:Axis Title="Voltage (V)" Foreground="#2196F3" ShowLabels="True" MinValue="0" Position="LeftBottom">
                                         <lvc:Axis.Separator>
                                             <lvc:Separator IsEnabled="True" StrokeThickness="0.5">
                                                 <lvc:Separator.Stroke>
                                                     <SolidColorBrush Color="#EEEEEE"/>
                                                 </lvc:Separator.Stroke>
                                             </lvc:Separator>
+                                        </lvc:Axis.Separator>
+                                    </lvc:Axis>
+                                    <lvc:Axis Title="Current (A)" Foreground="#F97316" ShowLabels="True" MinValue="0" Position="RightTop">
+                                        <lvc:Axis.Separator>
+                                            <lvc:Separator IsEnabled="False"/>
                                         </lvc:Axis.Separator>
                                     </lvc:Axis>
                                 </lvc:CartesianChart.AxisY>
@@ -322,6 +406,7 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="#2196F3"/>
+                                                                <Setter Property="TextWrapping" Value="Wrap"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding Level}" Value="{x:Static enums:LogLevel.Error}">
                                                                         <Setter Property="Foreground" Value="#F44336"/>
@@ -397,13 +482,13 @@
                                 <Border BorderBrush="#E0E0E0" BorderThickness="1" Margin="2" Padding="10,8" CornerRadius="4">
                                     <StackPanel HorizontalAlignment="Center">
                                         <TextBlock Text="Ampere Hour" Foreground="#666" FontSize="10" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="{Binding SelectedBattery.Voltage, StringFormat={}{0:F1} V}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedBattery.AmpereHour, StringFormat={}{0:F1} V}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
                                 <Border BorderBrush="#E0E0E0" BorderThickness="1" Margin="2" Padding="10,8" CornerRadius="4">
                                     <StackPanel HorizontalAlignment="Center">
                                         <TextBlock Text="Capacity" Foreground="#666" FontSize="10" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="{Binding SelectedBattery.Voltage, StringFormat={}{0:F1} V}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedBattery.Capacity, StringFormat={}{0:F1} V}" Foreground="#333" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
                                 <Border BorderBrush="#E0E0E0" BorderThickness="1" Margin="2" Padding="10,8" CornerRadius="4">
@@ -440,9 +525,14 @@
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Grid.Column="0" Text="{Binding Step}" Foreground="#333" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="1" Text="?" Foreground="#4CAF50" FontSize="14" FontWeight="Bold" VerticalAlignment="Center">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
+                                                    <Path Grid.Column="1" 
+                                                          Data="M9.86 18 3.5 11.64 4.91 10.22 9.86 15.17 19.09 5.93 20.5 7.34Z"
+                                                          Fill="#4CAF50" 
+                                                          Stretch="Uniform" 
+                                                          Width="18" Height="18" 
+                                                          VerticalAlignment="Center">
+                                                        <Path.Style>
+                                                            <Style TargetType="Path">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StepStatus.Completed}">
@@ -450,8 +540,8 @@
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
+                                                        </Path.Style>
+                                                    </Path>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>

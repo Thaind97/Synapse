@@ -13,6 +13,8 @@ namespace Synapse.Presentation.Models
         private int _stateOfCharge;
         private int _passCount;
         private bool _isSelected;
+        private double _ampereHour;
+        private double _capacity;
         private BatteryStatus _status = BatteryStatus.Normal;
         private ChartValues<double> _historyData = new();
         private ChartValues<double> _currentHistoryData = new();
@@ -57,6 +59,18 @@ namespace Synapse.Presentation.Models
         {
             get => _isSelected;
             set => SetProperty(ref _isSelected, value);
+        }
+
+        public double AmpereHour
+        {
+            get => _ampereHour;
+            set => SetProperty(ref _ampereHour, value);
+        }
+
+        public double Capacity
+        {
+            get => _capacity;
+            set => SetProperty(ref _capacity, value);
         }
 
         public BatteryStatus Status

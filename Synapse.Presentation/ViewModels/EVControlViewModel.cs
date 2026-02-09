@@ -35,6 +35,7 @@ namespace Synapse.Presentation.ViewModels
         private string _patternName = "CC Charge";
         private int _currentStepIndex = 0;
         private bool _useRealData = true;
+        private BatteryStatus? _statusFilter = null;
 
         public ObservableCollection<BatteryInfo> Batteries { get; set; } = new();
         public ObservableCollection<StepItem> Steps { get; set; } = new();
@@ -47,6 +48,32 @@ namespace Synapse.Presentation.ViewModels
         public ICommand StopCommand { get; }
         public ICommand PauseResumeCommand { get; }
         public ICommand SelectBatteryCommand { get; }
+        public ICommand FilterCommand { get; }
+
+        /// <summary>
+        /// Filtered batteries based on search text and status filter
+        /// </summary>
+        public IEnumerable<BatteryInfo> FilteredBatteries
+        {
+            get
+            {
+                var filtered = Batteries.AsEnumerable();
+
+                // Filter by search text (channel name)
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    filtered = filtered.Where(b => b.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+                }
+
+                // Filter by status
+                if (_statusFilter.HasValue)
+                {
+                    filtered = filtered.Where(b => b.Status == _statusFilter.Value);
+                }
+
+                return filtered;
+            }
+        }
 
         public bool IsRunning
         {
@@ -77,7 +104,13 @@ namespace Synapse.Presentation.ViewModels
         public string SearchText
         {
             get => _searchText;
-            set => SetProperty(ref _searchText, value);
+            set
+            {
+                if (SetProperty(ref _searchText, value))
+                {
+                    OnPropertyChanged(nameof(FilteredBatteries));
+                }
+            }
         }
 
         public string ElapsedTime
@@ -135,6 +168,7 @@ namespace Synapse.Presentation.ViewModels
             StopCommand = new RelayCommand(StopRealtime);
             PauseResumeCommand = new RelayCommand(TogglePauseResume);
             SelectBatteryCommand = new RelayCommand<BatteryInfo>(battery => SelectedBattery = battery);
+            FilterCommand = new RelayCommand(ShowFilterOptions);
 
             // Initialize asynchronously
             _ = InitializeViewAsync();
@@ -150,9 +184,59 @@ namespace Synapse.Presentation.ViewModels
             StopCommand = new RelayCommand(StopRealtime);
             PauseResumeCommand = new RelayCommand(TogglePauseResume);
             SelectBatteryCommand = new RelayCommand<BatteryInfo>(battery => SelectedBattery = battery);
+            FilterCommand = new RelayCommand(ShowFilterOptions);
 
             // Initialize asynchronously
             _ = InitializeViewAsync();
+        }
+
+        /// <summary>
+        /// Shows filter options dialog or cycles through status filters
+        /// </summary>
+        private void ShowFilterOptions()
+        {
+            // Cycle through filter options: All -> Normal -> Warning -> Inactive -> All
+            if (_statusFilter == null)
+            {
+                _statusFilter = BatteryStatus.Normal;
+                AddLogEntry("Filter: Showing Normal channels", LogLevel.Info);
+            }
+            else if (_statusFilter == BatteryStatus.Normal)
+            {
+                _statusFilter = BatteryStatus.Warning;
+                AddLogEntry("Filter: Showing Warning channels", LogLevel.Info);
+            }
+            else if (_statusFilter == BatteryStatus.Warning)
+            {
+                _statusFilter = BatteryStatus.Inactive;
+                AddLogEntry("Filter: Showing Inactive channels", LogLevel.Info);
+            }
+            else
+            {
+                _statusFilter = null;
+                AddLogEntry("Filter: Showing All channels", LogLevel.Info);
+            }
+
+            OnPropertyChanged(nameof(FilteredBatteries));
+        }
+
+        /// <summary>
+        /// Sets the status filter directly
+        /// </summary>
+        public void SetStatusFilter(BatteryStatus? status)
+        {
+            _statusFilter = status;
+            OnPropertyChanged(nameof(FilteredBatteries));
+        }
+
+        /// <summary>
+        /// Clears all filters
+        /// </summary>
+        public void ClearFilters()
+        {
+            SearchText = string.Empty;
+            _statusFilter = null;
+            OnPropertyChanged(nameof(FilteredBatteries));
         }
 
         private async Task InitializeViewAsync()
@@ -190,6 +274,8 @@ namespace Synapse.Presentation.ViewModels
                             Temperature = batteryData.Temperature,
                             StateOfCharge = batteryData.StateOfCharge,
                             PassCount = batteryData.PassCount,
+                            AmpereHour = batteryData.AmpereHour,
+                            Capacity = batteryData.Capacity,
                             Status = batteryData.Status,
                             HistoryData = historyData,
                             CurrentHistoryData = currentHistoryData
@@ -197,6 +283,7 @@ namespace Synapse.Presentation.ViewModels
                     }
 
                     SelectedBattery = Batteries.FirstOrDefault();
+                    OnPropertyChanged(nameof(FilteredBatteries));
 
                     // Load steps
                     Steps.Clear();
@@ -265,6 +352,8 @@ namespace Synapse.Presentation.ViewModels
                     Temperature = 20.0,
                     StateOfCharge = 70 + (i % 20),
                     PassCount = 0,
+                    AmpereHour = 5.6,
+                    Capacity = 5.6,
                     Status = status,
                     HistoryData = historyData,
                     CurrentHistoryData = currentHistoryData
@@ -272,6 +361,7 @@ namespace Synapse.Presentation.ViewModels
             }
 
             SelectedBattery = Batteries.FirstOrDefault();
+            OnPropertyChanged(nameof(FilteredBatteries));
 
             // Initialize Steps (matching screenshot)
             Steps.Add(new StepItem { Step = "Charge to 80%", Description = "CC-CV charging", Status = StepStatus.Completed });
@@ -300,7 +390,7 @@ namespace Synapse.Presentation.ViewModels
             var voltageValues = SelectedBattery?.HistoryData ?? new ChartValues<double>();
             var currentValues = SelectedBattery?.CurrentHistoryData ?? new ChartValues<double>();
             
-            // Voltage series - Blue line
+            // Voltage series - Blue line (left Y-axis, index 0)
             OverviewSeries.Add(new LineSeries
             {
                 Title = "Voltage",
@@ -308,10 +398,11 @@ namespace Synapse.Presentation.ViewModels
                 PointGeometry = null,
                 Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(59, 130, 246)),
                 Fill = System.Windows.Media.Brushes.Transparent,
-                LineSmoothness = 0.5
+                LineSmoothness = 0.5,
+                ScalesYAt = 0
             });
 
-            // Current series - Orange line
+            // Current series - Orange line (right Y-axis, index 1)
             OverviewSeries.Add(new LineSeries
             {
                 Title = "Current",
@@ -319,7 +410,8 @@ namespace Synapse.Presentation.ViewModels
                 PointGeometry = null,
                 Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(249, 115, 22)),
                 Fill = System.Windows.Media.Brushes.Transparent,
-                LineSmoothness = 0.5
+                LineSmoothness = 0.5,
+                ScalesYAt = 1
             });
         }
 
@@ -471,6 +563,8 @@ namespace Synapse.Presentation.ViewModels
                         battery.Temperature = data.Temperature;
                         battery.StateOfCharge = data.StateOfCharge;
                         battery.PassCount = data.PassCount;
+                        battery.AmpereHour = data.AmpereHour;
+                        battery.Capacity = data.Capacity;
 
                         // Update History for individual charts
                         battery.HistoryData.Add(data.Voltage);
@@ -479,6 +573,9 @@ namespace Synapse.Presentation.ViewModels
                         battery.CurrentHistoryData.Add(data.Current);
                         if (battery.CurrentHistoryData.Count > 65) battery.CurrentHistoryData.RemoveAt(0);
                     }
+
+                    // Refresh filtered view
+                    OnPropertyChanged(nameof(FilteredBatteries));
                 });
             }
             catch (Exception ex)
@@ -551,6 +648,9 @@ namespace Synapse.Presentation.ViewModels
                     battery.CurrentHistoryData.Add(battery.Current);
                     if (battery.CurrentHistoryData.Count > 65) battery.CurrentHistoryData.RemoveAt(0);
                 }
+
+                // Refresh filtered view
+                OnPropertyChanged(nameof(FilteredBatteries));
             });
         }
 

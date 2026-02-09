@@ -16,6 +16,8 @@ namespace Synapse.Services.Models
         public double Temperature { get; set; }
         public int StateOfCharge { get; set; }
         public int PassCount { get; set; }
+        public double AmpereHour { get; set; }
+        public double Capacity { get; set; }
         public BatteryStatus Status { get; set; } = BatteryStatus.Normal;
         public List<double> VoltageHistory { get; set; } = new();
         public List<double> CurrentHistory { get; set; } = new();
