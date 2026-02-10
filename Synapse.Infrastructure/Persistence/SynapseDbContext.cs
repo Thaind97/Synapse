@@ -18,6 +18,8 @@ namespace Synapse.Infrastructure.Persistence
         public DbSet<TestRun> TestRuns => Set<TestRun>();
         public DbSet<MeasurementLog> MeasurementLogs => Set<MeasurementLog>();
         public DbSet<SystemLog> SystemLogs => Set<SystemLog>();
+        public DbSet<SequenceAssignment> SequenceAssignments => Set<SequenceAssignment>();
+        public DbSet<Battery> Batteries => Set<Battery>();
 
         public SynapseDbContext(DbContextOptions<SynapseDbContext> options)
             : base(options)
@@ -44,6 +46,17 @@ namespace Synapse.Infrastructure.Persistence
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<SequenceAssignment>(b =>
+            {
+                b.HasIndex(x => x.BatteryChannel).IsUnique();
+                b.ToTable("SequenceAssignments");
+            });
+            builder.Entity<Battery>(b =>
+            {
+                b.HasIndex(x => x.Channel).IsUnique();
+                b.ToTable("Batteries");
+            });
         }
     }
 }

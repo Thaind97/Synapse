@@ -1,0 +1,51 @@
+# Visual Studio / .NET
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build Folders
+[Bb]in/
+[Oo]bj/
+**/[Bb]in/
+**/[Oo]bj/
+
+# NuGet
+*.nupkg
+packages/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Ignore publish outputs
+publish/
+
+# Ignore user secrets file
+secrets.json
+
+# Ignore Rider and JetBrains
+.idea/
+*.iml
+
+# Other
+*.vsix

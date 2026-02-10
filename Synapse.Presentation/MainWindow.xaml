@@ -21,6 +21,9 @@
         <DataTemplate DataType="{x:Type viewmodels:SequenceEditorViewModel}">
             <views:SequenceEditorView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type viewmodels:ManageBatteriesViewModel}">
+            <views:ManageBatteriesView />
+        </DataTemplate>
 
         <SolidColorBrush x:Key="SidebarBrush" Color="#00A699" />
         <SolidColorBrush x:Key="SidebarDarkBrush" Color="#008C82" />
@@ -120,6 +123,11 @@
                             Click="BtnSiteManagement_Click" />
                     <Button Style="{StaticResource MenuButton}"
                             Content="{Binding Localization[DeviceManagement]}" />
+                    <Button x:Name="BtnManageBatteries"
+                            Style="{StaticResource MenuButton}"
+                            Content="Manage Batteries"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="ManageBatteries" />
                     <Button Style="{StaticResource MenuButton}"
                             Content="{Binding Localization[Alerts]}" />
                     <Button Style="{StaticResource MenuButton}"

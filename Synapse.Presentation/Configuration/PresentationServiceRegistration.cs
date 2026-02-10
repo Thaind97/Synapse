@@ -20,6 +20,7 @@ namespace Synapse.Presentation.Configuration
             services.AddSingleton<DashboardViewModel>();
             services.AddSingleton<EVControlViewModel>();
             services.AddTransient<SequenceEditorViewModel>();
+            services.AddTransient<ManageBatteriesViewModel>();
 
             return services;
         }

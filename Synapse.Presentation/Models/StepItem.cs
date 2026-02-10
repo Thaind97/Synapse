@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Synapse.Shared.Enums;
 
 namespace Synapse.Presentation.Models
 {
@@ -6,6 +7,7 @@ namespace Synapse.Presentation.Models
     {
         private string _step = string.Empty;
         private string _description = string.Empty;
+        private StepStatus _status = StepStatus.Pending;
 
         public string Step
         {
@@ -17,6 +19,12 @@ namespace Synapse.Presentation.Models
         {
             get => _description;
             set => SetProperty(ref _description, value);
+        }
+
+        public StepStatus Status
+        {
+            get => _status;
+            set => SetProperty(ref _status, value);
         }
     }
 }

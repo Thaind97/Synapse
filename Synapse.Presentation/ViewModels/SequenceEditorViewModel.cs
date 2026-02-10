@@ -2,18 +2,29 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Synapse.Infrastructure.Entities;
 using Synapse.Services.Services.Abstraction;
-using Synapse.Shared.Constants;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Windows;
+using Synapse.Shared.Constants;
 
 namespace Synapse.Presentation.ViewModels
 {
     public class SequenceEditorViewModel : ObservableObject
     {
         private readonly ISequenceService _sequenceService;
+        private readonly IRunManager _runManager;
 
-        public SequenceEditorViewModel(ISequenceService sequenceService)
+        private readonly HashSet<long> _pendingSequenceDeletes = new();
+        private readonly HashSet<long> _pendingStepDeletes = new();
+        private readonly HashSet<long> _pendingCommandDeletes = new();
+
+        public SequenceEditorViewModel(ISequenceService sequenceService, IRunManager runManager)
         {
             _sequenceService = sequenceService;
+            _runManager = runManager;
 
             Sequences = new ObservableCollection<Sequence>();
             Steps = new ObservableCollection<SequenceStep>();
@@ -42,8 +53,13 @@ namespace Synapse.Presentation.ViewModels
 
             SaveChangesCommand = new AsyncRelayCommand(SaveChangesAsync);
 
+            // Run commands
+            StartRunCommand = new AsyncRelayCommand(StartRunAsync, () => SelectedSequence != null && !string.IsNullOrWhiteSpace(BatteryId));
+            StopRunCommand = new AsyncRelayCommand(StopRunAsync, () => !string.IsNullOrWhiteSpace(BatteryId));
+
             // Default START/END when no sequence selected
             ShowDefaultSteps();
+            InitializeDefaultBattery();
         }
 
         #region Properties
@@ -105,6 +121,34 @@ namespace Synapse.Presentation.ViewModels
             set => SetProperty(ref _selectedParameter, value);
         }
 
+        private string _batteryId = string.Empty;
+        public string BatteryId
+        {
+            get => _batteryId;
+            set
+            {
+                if (SetProperty(ref _batteryId, value))
+                {
+                    StartRunCommand.NotifyCanExecuteChanged();
+                    StopRunCommand.NotifyCanExecuteChanged();
+                }
+            }
+        }
+
+        public ObservableCollection<string> BatteryList { get; } = new ObservableCollection<string>(Enumerable.Range(1,24).Select(i => i.ToString()));
+
+        private string _selectedBattery;
+        public string SelectedBattery
+        {
+            get => _selectedBattery;
+            set => SetProperty(ref _selectedBattery, value);
+        }
+
+        private void InitializeDefaultBattery()
+        {
+            if (BatteryList.Count > 0 && string.IsNullOrEmpty(SelectedBattery))
+                SelectedBattery = BatteryList[0];
+        }
         #endregion
 
         #region Commands
@@ -126,6 +170,8 @@ namespace Synapse.Presentation.ViewModels
         public IRelayCommand MoveCommandDownCommand { get; }
         
         public IAsyncRelayCommand SaveChangesCommand { get; }
+        public IAsyncRelayCommand StartRunCommand { get; }
+        public IAsyncRelayCommand StopRunCommand { get; }
 
         #endregion
 
@@ -219,17 +265,23 @@ namespace Synapse.Presentation.ViewModels
                 if (SelectedStep.DeviceCommands != null)
                 {
                     var allCommands = SelectedStep.DeviceCommands.ToList();
+
+                    foreach (var cmd in allCommands)
+                    {
+                        cmd.ChildCommands.Clear();
+                    }
+
+                    foreach (var cmd in allCommands.Where(c => c.ParentCommandId != null))
+                    {
+                        var parent = allCommands.FirstOrDefault(c => c.Id == cmd.ParentCommandId);
+                        parent?.ChildCommands.Add(cmd);
+                    }
+
                     var rootCommands = allCommands.Where(c => c.ParentCommandId == null).ToList();
 
                     foreach (var cmd in rootCommands)
                     {
                         Commands.Add(cmd);
-
-                        var children = allCommands.Where(c => c.ParentCommandId == cmd.Id).ToList();
-                        foreach (var child in children)
-                        {
-                            Commands.Add(child);
-                        }
                     }
                 }
             }
@@ -258,21 +310,27 @@ namespace Synapse.Presentation.ViewModels
             };
             
             // Add Start and End steps
-            newSeq.Steps.Add(new SequenceStep { StepOrder = 0, StepType = SequenceConstants.StepTypeStart, StepName = SequenceConstants.StepTypeStart });
-            newSeq.Steps.Add(new SequenceStep { StepOrder = 1, StepType = SequenceConstants.StepTypeEnd, StepName = SequenceConstants.StepTypeEnd });
+            newSeq.Steps.Add(new SequenceStep { StepOrder = 0, StepType = SequenceConstants.StepTypeStart, StepName = SequenceConstants.StepTypeStart, Sequence = newSeq });
+            newSeq.Steps.Add(new SequenceStep { StepOrder = 1, StepType = SequenceConstants.StepTypeEnd, StepName = SequenceConstants.StepTypeEnd, Sequence = newSeq });
 
-            await _sequenceService.CreateSequenceAsync(newSeq);
             Sequences.Add(newSeq);
             SelectedSequence = newSeq;
+            await Task.CompletedTask;
         }
 
         private async Task DeleteSequenceAsync()
         {
             if (SelectedSequence == null) return;
+
             var seq = SelectedSequence;
-            await _sequenceService.DeleteSequenceAsync(seq.Id);
+            if (seq.Id > 0)
+            {
+                _pendingSequenceDeletes.Add(seq.Id);
+            }
+
             Sequences.Remove(seq);
-            SelectedSequence = null;
+            SelectedSequence = Sequences.FirstOrDefault();
+            await Task.CompletedTask;
         }
 
         private async Task AddStepAsync()
@@ -287,22 +345,22 @@ namespace Synapse.Presentation.ViewModels
             if (endStep != null)
             {
                 endStep.StepOrder++;
-                await _sequenceService.UpdateStepAsync(endStep);
             }
 
             var newStep = new SequenceStep
             {
+                Sequence = SelectedSequence,
                 SequenceId = SelectedSequence.Id,
                 StepOrder = order,
                 StepType = "PARTITION",
                 StepName = "New Step"
             };
 
-            await _sequenceService.AddStepAsync(newStep);
-            SelectedSequence.Steps.Add(newStep); // Update local collection reference
+            SelectedSequence.Steps.Add(newStep);
             
             RefreshSteps();
             SelectedStep = newStep;
+            await Task.CompletedTask;
         }
 
         private async Task DeleteStepAsync()
@@ -310,10 +368,23 @@ namespace Synapse.Presentation.ViewModels
             if (SelectedStep == null || SelectedSequence == null) return;
             if (SelectedStep.StepType == SequenceConstants.StepTypeStart || SelectedStep.StepType == SequenceConstants.StepTypeEnd) return; // Prevent deleting start/end?
 
-            await _sequenceService.DeleteStepAsync(SelectedStep.Id);
+            if (SelectedStep.DeviceCommands != null)
+            {
+                foreach (var cmd in SelectedStep.DeviceCommands.Where(c => c.Id > 0))
+                {
+                    _pendingCommandDeletes.Add(cmd.Id);
+                }
+            }
+
+            if (SelectedStep.Id > 0)
+            {
+                _pendingStepDeletes.Add(SelectedStep.Id);
+            }
+
             SelectedSequence.Steps.Remove(SelectedStep);
             RefreshSteps();
             SelectedStep = null;
+            await Task.CompletedTask;
         }
 
         private async void MoveStepUp()
@@ -330,10 +401,6 @@ namespace Synapse.Presentation.ViewModels
 
             // Swap Orders
             (SelectedStep.StepOrder, prev.StepOrder) = (prev.StepOrder, SelectedStep.StepOrder);
-            
-            // Update DB
-            await _sequenceService.UpdateStepAsync(SelectedStep);
-            await _sequenceService.UpdateStepAsync(prev);
 
             // Refesh UI list
             var newIndex = index - 1;
@@ -356,53 +423,57 @@ namespace Synapse.Presentation.ViewModels
             // Swap Orders
             (SelectedStep.StepOrder, next.StepOrder) = (next.StepOrder, SelectedStep.StepOrder);
 
-            // Update DB
-            await _sequenceService.UpdateStepAsync(SelectedStep);
-            await _sequenceService.UpdateStepAsync(next);
-
             // Refesh UI list
             var newIndex = index + 1;
             Steps.Move(index, newIndex);
         }
 
-        // Note: For Commands, we don't have an explicit Order field in DB yet (DeviceCommand entity). 
-        // We relied on List order. To support persistent reordering, we should add an Order field or handle list index.
-        // Looking at schema: DeviceCommand has Id, StepId, Device, Command. No Order.
-        // The retrieval `Included` them. EF Core guarantees order if ordered by Key (Id), usually insertion order.
-        // If user wants custom order, we really should have an Order column.
-        // However, I'll implement "Remove then Re-insert" strategy? No, that changes ID.
-        // I will assume for now reordering is transient content in this session unless I add a column.
-        // Wait, "mũi tên lên xuống để thay đổi vị trí của các component". This implies persistent order.
-        // I should probably add an Order column to DeviceCommand.
-        // But the user didn't ask for schema change explicitly yet.
-        // Let's implement UI move for now.
-        
         private async void MoveCommandUp() 
         { 
              if (SelectedCommand == null || SelectedStep == null) return;
-             var index = Commands.IndexOf(SelectedCommand);
-             if (index > 0)
-             {
-                 var prev = Commands[index - 1];
-                 // Swap Orders (Assuming we added CommandOrder to entity)
-                 // (SelectedCommand.CommandOrder, prev.CommandOrder) = (prev.CommandOrder, SelectedCommand.CommandOrder);
-                 
-                 Commands.Move(index, index - 1);
-                 // await _sequenceService.UpdateCommandAsync(SelectedCommand);
-                 // await _sequenceService.UpdateCommandAsync(prev);
-             }
+             if (SelectedCommand.Command == SequenceConstants.StepTypeStart || SelectedCommand.Command == SequenceConstants.StepTypeEnd) return;
+
+             var ordered = SelectedStep.DeviceCommands.ToList();
+             var siblings = ordered.Where(c => c.ParentCommandId == SelectedCommand.ParentCommandId).ToList();
+
+             var index = siblings.IndexOf(SelectedCommand);
+             if (index <= 0) return;
+
+             var prev = siblings[index - 1];
+             var currentIndex = ordered.IndexOf(SelectedCommand);
+             var prevIndex = ordered.IndexOf(prev);
+
+             ordered.RemoveAt(currentIndex);
+             ordered.Insert(prevIndex, SelectedCommand);
+
+             SelectedStep.DeviceCommands.Clear();
+             foreach (var cmd in ordered) SelectedStep.DeviceCommands.Add(cmd);
+
+             RefreshCommands();
         }
         
         private void MoveCommandDown() 
         { 
              if (SelectedCommand == null || SelectedStep == null) return;
-             var index = Commands.IndexOf(SelectedCommand);
-             if (index < Commands.Count - 1)
-             {
-                 var next = Commands[index + 1];
-                 // Swap Orders
-                 Commands.Move(index, index + 1);
-             }
+             if (SelectedCommand.Command == SequenceConstants.StepTypeStart || SelectedCommand.Command == SequenceConstants.StepTypeEnd) return;
+
+             var ordered = SelectedStep.DeviceCommands.ToList();
+             var siblings = ordered.Where(c => c.ParentCommandId == SelectedCommand.ParentCommandId).ToList();
+
+             var index = siblings.IndexOf(SelectedCommand);
+             if (index < 0 || index >= siblings.Count - 1) return;
+
+             var next = siblings[index + 1];
+             var currentIndex = ordered.IndexOf(SelectedCommand);
+             var nextIndex = ordered.IndexOf(next);
+
+             ordered.RemoveAt(currentIndex);
+             ordered.Insert(nextIndex, SelectedCommand);
+
+             SelectedStep.DeviceCommands.Clear();
+             foreach (var cmd in ordered) SelectedStep.DeviceCommands.Add(cmd);
+
+             RefreshCommands();
         }
 
         private async Task AddGenericCommandAsync(string cmdType, string cmdName)
@@ -411,6 +482,7 @@ namespace Synapse.Presentation.ViewModels
 
             var newCmd = new DeviceCommand
             {
+                Step = SelectedStep,
                 StepId = SelectedStep.Id,
                 Device = cmdType,
                 Command = cmdName
@@ -445,10 +517,10 @@ namespace Synapse.Presentation.ViewModels
                 newCmd.CommandParameters.Add(new CommandParameter { Name = "Current", Value = "5", Unit = "A" });
             }
 
-            await _sequenceService.AddCommandAsync(newCmd);
             SelectedStep.DeviceCommands.Add(newCmd);
             RefreshCommands();
             SelectedCommand = newCmd;
+            await Task.CompletedTask;
         }
 
         private async Task AddDeviceCommandAsync() => await AddGenericCommandAsync(SequenceConstants.CommandDevice, "NEW COMMAND");
@@ -460,6 +532,7 @@ namespace Synapse.Presentation.ViewModels
 
             var loopCmd = new DeviceCommand
             {
+                Step = SelectedStep,
                 StepId = SelectedStep.Id,
                 Device = SequenceConstants.CommandLoop,
                 Command = SequenceConstants.CommandLoop
@@ -472,34 +545,103 @@ namespace Synapse.Presentation.ViewModels
                 Unit = "times"
             });
 
-            await _sequenceService.AddCommandAsync(loopCmd);
             SelectedStep.DeviceCommands.Add(loopCmd);
             RefreshCommands();
             SelectedCommand = loopCmd;
+            await Task.CompletedTask;
         }
 
         private async Task DeleteCommandAsync()
         {
             if (SelectedCommand == null || SelectedStep == null) return;
-            
-            await _sequenceService.DeleteCommandAsync(SelectedCommand.Id);
-            SelectedStep.DeviceCommands.Remove(SelectedCommand);
+
+            var toRemove = SelectedStep.DeviceCommands
+                .Where(c => c.Id == SelectedCommand.Id || c.ParentCommandId == SelectedCommand.Id)
+                .ToList();
+
+            foreach (var cmd in toRemove)
+            {
+                if (cmd.Id > 0)
+                {
+                    _pendingCommandDeletes.Add(cmd.Id);
+                }
+
+                SelectedStep.DeviceCommands.Remove(cmd);
+            }
+
             RefreshCommands();
             SelectedCommand = null;
+            await Task.CompletedTask;
         }
 
         private async Task SaveChangesAsync()
         {
-            if (SelectedSequence != null)
+            try
             {
-                await _sequenceService.UpdateSequenceAsync(SelectedSequence);
+                await SavePendingDeletesAsync();
+
+                foreach (var sequence in Sequences)
+                {
+                    sequence.UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                    if (sequence.Id == 0)
+                    {
+                        await _sequenceService.CreateSequenceAsync(sequence);
+                    }
+                    else
+                    {
+                        await _sequenceService.UpdateSequenceAsync(sequence);
+                    }
+                }
+
+                _pendingCommandDeletes.Clear();
+                _pendingStepDeletes.Clear();
+                _pendingSequenceDeletes.Clear();
+
+                MessageBox.Show("Lưu sequence thành công.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lưu sequence thất bại: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
+        private async Task SavePendingDeletesAsync()
+        {
+            foreach (var commandId in _pendingCommandDeletes)
+            {
+                await _sequenceService.DeleteCommandAsync(commandId);
+            }
+
+            foreach (var stepId in _pendingStepDeletes)
+            {
+                await _sequenceService.DeleteStepAsync(stepId);
+            }
+
+            foreach (var sequenceId in _pendingSequenceDeletes)
+            {
+                await _sequenceService.DeleteSequenceAsync(sequenceId);
+            }
+        }
+
+        private async Task StartRunAsync()
+        {
+            if (SelectedSequence == null || string.IsNullOrWhiteSpace(BatteryId)) return;
+            await _runManager.EnqueueRunAsync(SelectedSequence.Id, BatteryId);
+        }
+
+        private async Task StopRunAsync()
+        {
+            if (string.IsNullOrWhiteSpace(BatteryId)) return;
+            await _runManager.StopRunAsync(BatteryId);
+        }
+
         private void NotifySequenceCommands()
         {
             DeleteSequenceCommand.NotifyCanExecuteChanged();
             AddStepCommand.NotifyCanExecuteChanged();
+            StartRunCommand?.NotifyCanExecuteChanged();
+            StopRunCommand?.NotifyCanExecuteChanged();
         }
 
         private void NotifyStepCommands()

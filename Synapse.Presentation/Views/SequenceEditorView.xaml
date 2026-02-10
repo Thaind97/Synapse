@@ -6,12 +6,14 @@
              xmlns:local="clr-namespace:Synapse.Presentation.Views"
              xmlns:vm="clr-namespace:Synapse.Presentation.ViewModels"
              xmlns:converters="clr-namespace:Synapse.Presentation.Converters"
+             xmlns:constants="clr-namespace:Synapse.Shared.Constants;assembly=Synapse.Shared"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="1000"
              Background="#FAFAFA">
     <UserControl.Resources>
         <converters:CommandColorConverter x:Key="CommandColorConverter"/>
-        
+        <converters:LoopCountConverter x:Key="LoopCountConverter"/>
+
         <Style TargetType="Button" x:Key="ActionButtonStyle">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#DDDDDD"/>
@@ -49,7 +51,7 @@
                          <Border Background="{TemplateBinding Background}" 
                                  BorderBrush="{TemplateBinding BorderBrush}" 
                                  BorderThickness="1"
-                                 CornerRadius="5" Padding="5">
+                                 CornerRadius="5" Padding="{TemplateBinding Padding}">
                              <ContentPresenter/>
                          </Border>
                         <ControlTemplate.Triggers>
@@ -57,6 +59,7 @@
                                 <Setter Property="BorderBrush" Value="#4CAF50"/>
                                 <Setter Property="BorderThickness" Value="2"/>
                                 <Setter Property="Background" Value="#F1F8E9"/>
+                                <Setter Property="Padding" Value="0,5"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -127,9 +130,17 @@
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="10" Padding="10" Margin="5" Background="White">
-                                <TextBlock Text="{Binding StepName}" HorizontalAlignment="Center"/>
-                            </Border>
+                            <StackPanel>
+                                <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="10" Padding="10" Margin="5" Background="White">
+                                    <TextBlock Text="{Binding StepName}" HorizontalAlignment="Center"/>
+                                </Border>
+                                <TextBlock x:Name="StepArrow" Text="↓" FontSize="16" HorizontalAlignment="Center" Foreground="#4CAF50"/>
+                            </StackPanel>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding StepType}" Value="{x:Static constants:SequenceConstants.StepTypeEnd}">
+                                    <Setter TargetName="StepArrow" Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -149,6 +160,7 @@
                 <Button Content="Delete" Command="{Binding DeleteDeviceCommandCommand}" Style="{StaticResource ActionButtonStyle}" Width="50"/>
                 <Button Content="↑" Command="{Binding MoveCommandUpCommand}" Style="{StaticResource ActionButtonStyle}" Width="30"/>
                 <Button Content="↓" Command="{Binding MoveCommandDownCommand}" Style="{StaticResource ActionButtonStyle}" Width="30"/>
+                <Button Content="Manage Batteries" Click="ManageBatteries_Click" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0"/>
             </StackPanel>
 
             <Border Grid.Row="1" BorderBrush="#CCCCCC" BorderThickness="1" Margin="0,5,0,0" Background="White">
@@ -157,16 +169,58 @@
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                             <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="0" Padding="10" Margin="5" Background="{Binding Device, Converter={StaticResource CommandColorConverter}}">
-                                 <Grid>
-                                     <Grid.ColumnDefinitions>
-                                         <ColumnDefinition Width="Auto"/>
-                                         <ColumnDefinition Width="*"/>
-                                     </Grid.ColumnDefinitions>
-                                     <!-- Imagine an icon here -->
-                                     <TextBlock Grid.Column="1" Text="{Binding Command}" HorizontalAlignment="Center"/>
-                                 </Grid>
-                            </Border>
+                            <StackPanel>
+                                <Grid>
+                                    <Border x:Name="NormalCommand" BorderBrush="Gray" BorderThickness="1" CornerRadius="0" Padding="10" Margin="5" Background="{Binding Device, Converter={StaticResource CommandColorConverter}}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="1" Text="{Binding DisplayCommand}" HorizontalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <Border x:Name="LoopCommand" BorderBrush="#4CAF50" BorderThickness="1" CornerRadius="0" Padding="10" Margin="5" Background="#A5D6A7" Visibility="Collapsed">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="LOOP" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Converter={StaticResource LoopCountConverter}}" Margin="10,0,0,0"/>
+                                            </Grid>
+
+                                            <ListBox ItemsSource="{Binding ChildCommands}" Margin="0,8,0,0"
+                                                     SelectedItem="{Binding DataContext.SelectedCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel>
+                                                            <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="0" Padding="10" Margin="5,2" Background="{Binding Device, Converter={StaticResource CommandColorConverter}}">
+                                                                <TextBlock Text="{Binding DisplayCommand}" HorizontalAlignment="Center"/>
+                                                            </Border>
+                                                            <TextBlock x:Name="ChildArrow" Text="↓" FontSize="16" HorizontalAlignment="Center" Foreground="#4CAF50"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                                <TextBlock x:Name="CommandArrow" Text="↓" FontSize="16" HorizontalAlignment="Center" Foreground="#4CAF50"/>
+                            </StackPanel>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Command}" Value="{x:Static constants:SequenceConstants.CommandLoop}">
+                                    <Setter TargetName="NormalCommand" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="LoopCommand" Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Command}" Value="{x:Static constants:SequenceConstants.StepTypeEnd}">
+                                    <Setter TargetName="CommandArrow" Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

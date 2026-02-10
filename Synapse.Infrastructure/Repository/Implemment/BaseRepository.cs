@@ -18,43 +18,40 @@ namespace Synapse.Infrastructure.Repository.Implemment
         {
             _dbContext = dbContext;
             _dbSet = _dbContext.Set<TEntity>();
-            _dbContext.Database.EnsureCreated();
         }
 
         public virtual async Task AddAsync(TEntity entity)
         {
             await _dbContext.Set<TEntity>().AddAsync(entity);
-            await _dbContext.SaveChangesAsync();
         }
 
-        public virtual async Task AddRangeAsync(IEnumerable<TEntity> entities)
+        public virtual Task AddRangeAsync(IEnumerable<TEntity> entities)
         {
             _dbContext.Set<TEntity>().AddRange(entities);
-            await _dbContext.SaveChangesAsync();
+            return Task.CompletedTask;
         }
 
         public virtual void Update(TEntity entity)
         {
             _dbContext.Entry(entity).State = EntityState.Modified;
             _dbContext.Set<TEntity>().Update(entity);
-            _dbContext.SaveChanges();
         }
 
-        public virtual async Task UpdateAsync(TEntity entity)
+        public virtual Task UpdateAsync(TEntity entity)
         {
             _dbContext.Entry(entity).State = EntityState.Modified;
             _dbContext.Set<TEntity>().Update(entity);
-            await _dbContext.SaveChangesAsync();
+            return Task.CompletedTask;
         }
 
-        public virtual async Task UpdateRangeAsync(IEnumerable<TEntity> entities)
+        public virtual Task UpdateRangeAsync(IEnumerable<TEntity> entities)
         {
             foreach (var entity in entities)
             {
                 _dbContext.Entry(entity).State = EntityState.Modified;
             }
             _dbContext.Set<TEntity>().UpdateRange(entities);
-            await _dbContext.SaveChangesAsync();
+            return Task.CompletedTask;
         }
 
         public virtual async Task<TEntity> GetByIdAsync(Guid id)
@@ -65,20 +62,17 @@ namespace Synapse.Infrastructure.Repository.Implemment
         public virtual void Remove(TEntity entity)
         {
             _dbContext.Set<TEntity>().Remove(entity);
-            _dbContext.SaveChanges();
         }
 
         public virtual void RemoveRange(IEnumerable<TEntity> entities)
         {
             _dbContext.Set<TEntity>().RemoveRange(entities);
-            _dbContext.SaveChanges();
         }
 
         public virtual void RemoveAllRows()
         {
             var dbSet = _dbContext.Set<TEntity>();
             dbSet.RemoveRange(dbSet);
-            _dbContext.SaveChanges();
         }
 
         public virtual async Task<TEntity> GetFirstOrDefaultWithPredicateAsync(Expression<Func<TEntity, bool>> predicate)
