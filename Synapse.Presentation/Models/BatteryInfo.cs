@@ -8,8 +8,8 @@ namespace Synapse.Presentation.Models
     {
         private string _name = string.Empty;
         private double _voltage;
-        private double _current = 5.0;
-        private double _temperature = 20.0;
+        private double _current;
+        private double _temperature;
         private int _stateOfCharge;
         private int _passCount;
         private bool _isSelected;
