@@ -145,7 +145,7 @@ namespace Synapse.Presentation.ViewModels
             set => SetProperty(ref _currentStepIndex, value);
         }
 
-        public string StatusDescription => IsRunning ? "SYSTEM RUNNING - REALTIME DATA" : "SYSTEM IDLE";
+        public string StatusDescription => IsRunning ? "SYSTEM RUNNING - REALTIME IPC (SHARED MEMORY)" : "SYSTEM IDLE";
 
         public BatteryInfo? SelectedBattery
         {
