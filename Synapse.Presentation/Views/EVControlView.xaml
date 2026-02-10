@@ -119,9 +119,9 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/> <!-- Top Bar: Controls + Search -->
-                <RowDefinition Height="Auto"/> <!-- Channel Status Panel -->
+                <RowDefinition Height="240"/> <!-- Channel Status Panel - Fixed height -->
                 <RowDefinition Height="Auto"/> <!-- Progress Bar -->
-                <RowDefinition Height="*"/>    <!-- Bottom Section -->
+                <RowDefinition Height="400"/>    <!-- Bottom Section - Fixed height -->
             </Grid.RowDefinitions>
 
             <!-- Top Bar: Start/Stop/Pause + Search/Filter -->
@@ -207,22 +207,27 @@
                 </Grid>
             </Border>
 
-            <!-- Channel Status Panel -->
-            <Border Grid.Row="1" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,10">
-                <ItemsControl ItemsSource="{Binding FilteredBatteries}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Columns="8"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource ChannelCardStyle}">
-                                <Border.InputBindings>
-                                    <MouseBinding MouseAction="LeftClick" 
-                                                  Command="{Binding DataContext.SelectBatteryCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl}}" 
-                                                  CommandParameter="{Binding .}"/>
-                                </Border.InputBindings>
+            <!-- Channel Status Panel - 14 batteries visible (7 per row, 2 rows) with horizontal scrolling -->
+            <Border Grid.Row="1" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,10" Height="240">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                              VerticalScrollBarVisibility="Disabled"
+                              PreviewMouseWheel="ChannelScrollViewer_PreviewMouseWheel"
+                              Padding="0,0,0,5">
+                    <ItemsControl ItemsSource="{Binding FilteredBatteries}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <!-- UniformGrid with 2 rows for horizontal layout, scrolls horizontally -->
+                                <UniformGrid Rows="2"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource ChannelCardStyle}" Width="130" Height="94">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick" 
+                                                      Command="{Binding DataContext.SelectBatteryCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl}}" 
+                                                      CommandParameter="{Binding .}"/>
+                                    </Border.InputBindings>
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -297,6 +302,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                </ScrollViewer>
             </Border>
 
             <!-- Progress Bar (Status Indicator for all channels) -->
